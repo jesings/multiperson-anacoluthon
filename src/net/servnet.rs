@@ -19,8 +19,8 @@ impl ServerNetstate {
             }
         }
 
-        return Self {
+        Self {
             streams: streamvec,
-        };
+        }
     }
 }
