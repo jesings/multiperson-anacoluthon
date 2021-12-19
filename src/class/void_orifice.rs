@@ -7,7 +7,7 @@ pub struct VoidOrifice {
 }
 
 impl Classlike for VoidOrifice {
-    fn mov(&self, gamestate: Arc<ClientGameState>, dir: (usize, usize)) {
+    fn mov(&self, gamestate: Arc<ClientGamestate>, dir: (usize, usize)) {
         match dir {
             (0, c) => false,
             (r, _) => false,

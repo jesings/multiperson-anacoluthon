@@ -4,9 +4,10 @@
 mod net;
 mod gamestate;
 mod map;
+mod client_gameloop;
 mod player;
 mod class;
 
 fn main() {
-    println!("Hello, world!");
+    client_gameloop::gameloop();
 }

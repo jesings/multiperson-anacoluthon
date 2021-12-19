@@ -7,11 +7,11 @@ pub enum Class {
 }
 
 pub trait Classlike {
-    fn mov(&self, gamestate: Arc<ClientGameState>, dir: (usize, usize));
+    fn mov(&self, gamestate: Arc<ClientGamestate>, dir: (usize, usize));
 }
 
 impl Classlike for Class {
-    fn mov(&self, gamestate: Arc<ClientGameState>, dir: (usize, usize)) {
+    fn mov(&self, gamestate: Arc<ClientGamestate>, dir: (usize, usize)) {
         match self {
             Class::VoidOrifice(void_orifice) => void_orifice.mov(gamestate, dir),
         };
