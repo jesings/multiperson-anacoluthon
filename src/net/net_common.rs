@@ -1,8 +1,7 @@
 use std::net::*;
 
 pub struct ServerNetstate {
-    pub listener: TcpListener,
-    pub streams: Vec<TcpStream>,
+    pub streams: Vec<(TcpStream, SocketAddr)>,
 }
 
 pub struct ClientNetstate {
