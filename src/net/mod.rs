@@ -1,3 +1,3 @@
-mod clinet;
-mod servnet;
+pub mod clinet;
+pub mod servnet;
 mod net_common;

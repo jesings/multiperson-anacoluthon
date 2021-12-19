@@ -1,15 +1,18 @@
+use super::net_common::*;
 use std::net::*;
 use std::time::*;
-use super::net_common::*;
 
 const ACCEPT_WAITTIME: u64 = 10;
 
 impl ServerNetstate {
     pub fn initialize_server(listen_ip_str: String) -> Self {
-        let server_listener = TcpListener::bind(listen_ip_str).expect("Server was configured to bind to an invalid address!");
-        let mut streamvec = vec!();
+        let server_listener = TcpListener::bind(listen_ip_str)
+            .expect("Server was configured to bind to an invalid address!");
+        let mut streamvec = vec![];
 
-        server_listener.set_nonblocking(true).expect("Could not set listening socket to be nonblocking!");
+        server_listener
+            .set_nonblocking(true)
+            .expect("Could not set listening socket to be nonblocking!");
 
         //do some accepts to create the streams
         let loopstarttime = Instant::now();
@@ -19,8 +22,6 @@ impl ServerNetstate {
             }
         }
 
-        Self {
-            streams: streamvec,
-        }
+        Self { streams: streamvec }
     }
 }
