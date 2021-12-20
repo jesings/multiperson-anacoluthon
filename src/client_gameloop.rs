@@ -25,7 +25,7 @@ fn init_game() -> gamestate::ClientGamestate {
         },
         pid: 0,
         gamedata: Arc::new(gamestate::Gamedata {
-            players: vec![Player::test_player(0)],
+            players: vec![Arc::new(Mutex::new(Player::test_player(0)))],
             grid: Grid::gen_blank_grid(480, 640),
         }),
     }

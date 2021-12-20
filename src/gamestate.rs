@@ -16,7 +16,7 @@ pub struct ClientGamestate {
 
 // todo: jonathicc decide what the mutex guards guard
 pub struct Gamedata {
-    pub players: Vec<Player>,
+    pub players: Vec<Arc<Mutex<Player>>>,
     pub grid: Grid,
 }
 
