@@ -5,3 +5,13 @@ pub struct Player {
     pub pos: (usize, usize),
     pub class: Class,
 }
+
+impl Player {
+    pub fn test_player(pid: usize) -> Self {
+        Player {
+            pid: pid,
+            pos: (64, 64),
+            class: Class::void_orifice(),
+        }
+    }
+}

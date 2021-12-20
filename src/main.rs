@@ -11,3 +11,10 @@ mod class;
 fn main() {
     client_gameloop::gameloop();
 }
+
+/*
+          ^(;,;)^
+you have gazed upon main.rs
+now you will surely perish.
+
+*/

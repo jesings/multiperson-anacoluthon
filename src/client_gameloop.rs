@@ -1,5 +1,7 @@
 use crate::gamestate;
 use crate::net;
+use crate::player::player::*;
+use crate::map::grid::*;
 
 use sdl2::*;
 
@@ -22,6 +24,10 @@ fn init_game() -> gamestate::ClientGamestate {
             canv: Mutex::new(canvas),
         },
         pid: 0,
+        gamedata: Arc::new(gamestate::Gamedata {
+            players: vec![Player::test_player(0)],
+            grid: Grid::gen_blank_grid(480, 640),
+        }),
     }
 }
 
