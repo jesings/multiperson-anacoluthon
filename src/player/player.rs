@@ -1,8 +1,9 @@
 use crate::class::class::*;
 
+#[derive(Debug)]
 pub struct Player {
     pub pid: usize,
-    pub pos: (usize, usize),
+    pub pos: (isize, isize),
     pub class: Class,
 }
 

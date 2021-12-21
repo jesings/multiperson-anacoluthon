@@ -6,6 +6,7 @@ use crate::map::grid::*;
 use sdl2::*;
 
 use std::sync::*;
+use std::time::{Duration, Instant};
 
 fn init_game() -> gamestate::ClientGamestate {
     let sdl_context = sdl2::init().unwrap();
@@ -39,25 +40,44 @@ pub fn gameloop() {
     canv.present();
     drop(canv);
 
+    let start = Instant::now();
     let mut i = 0;
     'running: loop {
+        let now = start.elapsed();
         let mut canvas = gs.sdl.canv.lock().expect("could not unlock canvas");
         i = (i + 1) % 255;
         canvas.set_draw_color(pixels::Color::RGB(i, 64, 255 - i));
         canvas.clear();
+        let mut callstack = vec![];
         for event in gs.sdl.pump.lock().unwrap().poll_iter() {
             match event {
                 event::Event::Quit {..} |
                 event::Event::KeyDown { keycode: Some(keyboard::Keycode::Escape), .. } => {
                     break 'running
                 },
+                event::Event::KeyDown {keycode: Some(keyboard::Keycode::W), repeat: false, .. } => {
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (-1, 0), now));
+                },
+                event::Event::KeyDown {keycode: Some(keyboard::Keycode::A), repeat: false, .. } => {
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, -1), now));
+                },
+                event::Event::KeyDown {keycode: Some(keyboard::Keycode::S), repeat: false, .. } => {
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (1, 0), now));
+                },
+                event::Event::KeyDown {keycode: Some(keyboard::Keycode::D), repeat: false, .. } => {
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, 1), now));
+                },
                 _ => {}
-            }
+            };
         }
+        for callback in callstack {
+            (callback)(gs.gamedata.clone());
+        }
+        // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());
         // The rest of the game loop goes here...
 
         canvas.present();
-        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
+        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
       }
 
 }
