@@ -5,7 +5,16 @@ mod net;
 mod gamestate;
 mod map;
 mod client_gameloop;
+mod player;
+mod class;
 
 fn main() {
     client_gameloop::gameloop();
 }
+
+/*
+          ^(;,;)^
+you have gazed upon main.rs
+now you will surely perish.
+
+*/

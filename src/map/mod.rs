@@ -1,2 +1,2 @@
-mod grid;
-mod mapgen;
+pub mod grid;
+pub mod mapgen;
