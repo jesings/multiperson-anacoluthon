@@ -37,19 +37,19 @@ impl gamestate::ClientGamestate {
         //render tiles between corners
         while rendrect.x() < icanvsize.0 {
             rendrect.set_y(top_y);
-            let xpos = (rendrect.x() - player_tile_start_x) / ITILEWIDTH + pos.0 as i32;
+            let col_index = (rendrect.x() - player_tile_start_x) / ITILEWIDTH + pos.0 as i32;
             while rendrect.y() < icanvsize.1 {
                 //eventually use copy or copy_ex for textures, get from the grid coord
                 
-                let ypos = (rendrect.y() - player_tile_start_y) / ITILEWIDTH + pos.1 as i32;
+                let row_index = (rendrect.y() - player_tile_start_y) / ITILEWIDTH + pos.1 as i32;
                 //now we have the position of the tile from its location relative to the player
 
-                if xpos >= 0 && ypos >= 0 {
+                if col_index >= 0 && row_index >= 0 {
                      let mut seed = [0u8; 32];
-                     for (index, b) in xpos.to_ne_bytes().iter().enumerate() {
+                     for (index, b) in col_index.to_ne_bytes().iter().enumerate() {
                          seed[index] = *b;
                      }
-                     for (index, b) in ypos.to_ne_bytes().iter().enumerate() {
+                     for (index, b) in row_index.to_ne_bytes().iter().enumerate() {
                          seed[index + 4] = *b;
                      }
                      let mut sillyrng = StdRng::from_seed(seed);
@@ -62,7 +62,7 @@ impl gamestate::ClientGamestate {
                 }
                 
                 if let Err(_) = canv.fill_rect(rendrect) {
-                    eprintln!("Could not render tile at ({}, {}) from grid", xpos, ypos);
+                    eprintln!("Could not render tile at ({}, {}) from grid", col_index, row_index);
                 }
 
                 rendrect.offset(0, ITILEWIDTH);
