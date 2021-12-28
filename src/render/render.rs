@@ -71,19 +71,25 @@ impl gamestate::ClientGamestate {
         }
 
         let curplayer_rect = Rect::new((icanvsize.0 - IPLAYERWIDTH) / 2, (icanvsize.1 - IPLAYERWIDTH) / 2, PLAYERWIDTH, PLAYERWIDTH);
+
+        //now draw the players
         for wrappedplayer in &gd.players {
             let player = wrappedplayer.lock().expect("Could not lock player to get its position.");
             let rightrect;
+
             if player.pid == pid {
+                //for the current player, just draw it in the center of the screen
                 canv.set_draw_color(Color::RGB(0, 255, 0));
                 rightrect = curplayer_rect.clone();
             } else {
+                //for the other players, find their tile offset from the current player and render them from that
                 canv.set_draw_color(Color::RGB(255, 0, 0));
                 let otherpos = player.pos;
                 let xdelta = (otherpos.0 - pos.0) as i32;
                 let ydelta = (otherpos.1 - pos.1) as i32;
                 rightrect = Rect::new((icanvsize.0 - IPLAYERWIDTH) / 2 - xdelta * ITILEWIDTH, (icanvsize.1 - IPLAYERWIDTH) / 2 - ydelta * ITILEWIDTH, PLAYERWIDTH, PLAYERWIDTH);
             }
+
             if let Err(_) = canv.fill_rect(rightrect) {
                 eprintln!("Could not render player {}", player.pid);
             }
