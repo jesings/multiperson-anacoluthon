@@ -7,6 +7,7 @@ mod map;
 mod client_gameloop;
 mod player;
 mod class;
+mod render;
 
 fn main() {
     client_gameloop::gameloop();
