@@ -22,7 +22,7 @@ impl gamestate::ClientGamestate {
         let mut canv = self.sdl.canv.lock().expect("Could not lock canvas for rendering!");
         //canv.clear(); probably unneeded
 
-        //get row, col position
+        //get dimensions of the canvas
         let canvsize: (u32, u32) = canv.output_size().expect("Could not get canvas size.");
         let icanvsize = (canvsize.0 as i32, canvsize.1 as i32);
 
@@ -42,6 +42,8 @@ impl gamestate::ClientGamestate {
                 //eventually use copy or copy_ex for textures, get from the grid coord
                 
                 let ypos = (rendrect.y() - player_tile_start_y) / ITILEWIDTH + pos.1 as i32;
+                //now we have the position of the tile from its location relative to the player
+
                 if xpos >= 0 && ypos >= 0 {
                      let mut seed = [0u8; 32];
                      for (index, b) in xpos.to_ne_bytes().iter().enumerate() {
