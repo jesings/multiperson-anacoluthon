@@ -2,6 +2,7 @@ use crate::gamestate;
 use crate::net;
 use crate::player::player::*;
 use crate::map::grid::*;
+use crate::render::render::*;
 
 use sdl2::*;
 
@@ -34,20 +35,12 @@ fn init_game() -> gamestate::ClientGamestate {
 
 pub fn gameloop() {
     let gs = init_game();
-    let mut canv = gs.sdl.canv.lock().expect("Could not unlock canvas!");
-    canv.set_draw_color(pixels::Color::RGB(255, 255, 255));
-    canv.clear();
-    canv.present();
-    drop(canv);
 
     let start = Instant::now();
     let mut i = 0;
     'running: loop {
         let now = start.elapsed();
-        let mut canvas = gs.sdl.canv.lock().expect("could not unlock canvas");
         i = (i + 1) % 255;
-        canvas.set_draw_color(pixels::Color::RGB(i, 64, 255 - i));
-        canvas.clear();
         let mut callstack = vec![];
         for event in gs.sdl.pump.lock().unwrap().poll_iter() {
             match event {
@@ -56,16 +49,16 @@ pub fn gameloop() {
                     break 'running
                 },
                 event::Event::KeyDown {keycode: Some(keyboard::Keycode::W), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (-1, 0), now));
-                },
-                event::Event::KeyDown {keycode: Some(keyboard::Keycode::A), repeat: false, .. } => {
                     callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, -1), now));
                 },
+                event::Event::KeyDown {keycode: Some(keyboard::Keycode::A), repeat: false, .. } => {
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (-1, 0), now));
+                },
                 event::Event::KeyDown {keycode: Some(keyboard::Keycode::S), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (1, 0), now));
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, 1), now));
                 },
                 event::Event::KeyDown {keycode: Some(keyboard::Keycode::D), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, 1), now));
+                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (1, 0), now));
                 },
                 _ => {}
             };
@@ -76,8 +69,9 @@ pub fn gameloop() {
         // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());
         // The rest of the game loop goes here...
 
-        canvas.present();
+        gs.render();
+
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-      }
+    }
 
 }
