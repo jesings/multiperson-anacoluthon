@@ -89,7 +89,6 @@ impl gamestate::ClientGamestate {
             }
         }
         
-        //present canvas
         canv.present();
     }
 }
