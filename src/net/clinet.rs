@@ -1,5 +1,6 @@
 use std::net::*;
-pub use super::net_common::ClientNetstate;
+
+pub use super::net_common::{ClientNetstate, recv_pkt};
 
 impl ClientNetstate {
     pub fn intialize_client(server_ip_str: String) -> Self {

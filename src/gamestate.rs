@@ -1,5 +1,7 @@
+use serde::{Serialize, Deserialize};
 use sdl2::*;
 use std::sync::*;
+
 use super::net::clinet::ClientNetstate;
 use super::map::grid::Grid;
 use super::player::player::Player;
@@ -19,6 +21,9 @@ pub struct Gamedata {
     pub players: Vec<Arc<Mutex<Player>>>,
     pub grid: Grid,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct GDTuple(Vec<Player>, i128); //the i128 is the seed for mapgen
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mod

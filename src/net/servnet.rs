@@ -1,6 +1,7 @@
-pub use super::net_common::ServerNetstate;
 use std::net::*;
 use std::time::*;
+
+pub use super::net_common::{ServerNetstate, recv_pkt};
 
 const ACCEPT_WAITTIME: u64 = 10;
 

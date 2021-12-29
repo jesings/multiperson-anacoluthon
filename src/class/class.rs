@@ -1,10 +1,11 @@
+use serde::{Serialize, Deserialize};
 use std::sync::*;
 use std::time::Duration;
 
 use crate::gamestate::*;
 use super::void_orifice::*;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Class {
     VoidOrifice(VoidOrifice)
 }

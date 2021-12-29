@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use std::sync::*;
 use std::time::Duration;
 
@@ -6,7 +7,7 @@ use super::class::*;
 use crate::map::grid::*;
 use crate::gamestate::*;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VoidOrifice {
     mov_cd: Duration,
     mov_next: Duration,
