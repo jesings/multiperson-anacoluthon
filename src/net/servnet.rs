@@ -1,7 +1,12 @@
 use std::net::*;
 use std::time::*;
+use std::sync::*;
+use std::thread;
 
-pub use super::net_common::{ServerNetstate, recv_pkt};
+pub use super::net_common::ServerNetstate;
+pub use super::pkt::PktPayload;
+use crate::gamestate::Gamedata;
+use crate::server_gameloop::serveloop;
 
 const ACCEPT_WAITTIME: u64 = 10;
 
@@ -24,4 +29,18 @@ impl ServerNetstate {
             streams: streamvec,
         }
     }
+}
+
+//consumes the self object
+pub fn launch_server_workers(mut sns: ServerNetstate, gd: Arc<Mutex<Gamedata>>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<PktPayload>) -> Vec<thread::JoinHandle<Result<(), String>>> {
+    let mut launched = vec!();
+    for stream in sns.streams.drain(..) {
+        let new_gd_handle = gd.clone();
+        let new_sender = sender.clone();
+        let new_br = bus.add_rx();
+        launched.push(thread::spawn(move || {
+            serveloop(stream, new_gd_handle, new_sender, new_br)
+        }));
+    }
+    launched
 }

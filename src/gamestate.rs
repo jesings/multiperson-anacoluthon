@@ -3,6 +3,7 @@ use sdl2::*;
 use std::sync::*;
 
 use super::net::clinet::ClientNetstate;
+use super::net::pkt::PktPayload;
 use super::map::grid::Grid;
 use super::player::player::Player;
 
@@ -14,6 +15,11 @@ pub struct ClientGamestate {
     pub sdl: Sdlstate,
     pub pid: usize,
     pub gamedata: Arc<Gamedata>,
+}
+
+pub struct WorkerServerState {
+    pub gameedata: Gamedata,
+    pub broadcaster: bus::Bus<PktPayload>,
 }
 
 // todo: jonathicc decide what the mutex guards guard
