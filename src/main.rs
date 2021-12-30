@@ -11,7 +11,10 @@ mod class;
 mod render;
 
 fn main() {
-    client_gameloop::gameloop();
+    std::thread::spawn(move || {
+        client_gameloop::gameloop();
+    });
+    server_gameloop::gameloop();
 }
 
 /*

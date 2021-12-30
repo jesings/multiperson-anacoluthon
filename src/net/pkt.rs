@@ -27,7 +27,9 @@ struct PktHeader {
 pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
     let mut headerbuf = [0; std::mem::size_of::<PktHeader>()];
     if let Ok(num) = stream.read(&mut headerbuf) {
-        if num < std::mem::size_of::<PktHeader>() {
+        if num == 0 {
+            return Err("Socket has closed".to_string());
+        } else if num < std::mem::size_of::<PktHeader>() {
             return Err("Packet header was malformed".to_string());
         }
     } else {

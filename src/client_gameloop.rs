@@ -1,5 +1,5 @@
 use crate::gamestate;
-use crate::net;
+use crate::net::*;
 use crate::player::player::*;
 use crate::map::grid::*;
 use crate::render::render::*;
@@ -19,6 +19,7 @@ fn init_game() -> gamestate::ClientGamestate {
 
     let event_pump = sdl_context.event_pump().unwrap();
     gamestate::ClientGamestate {
+        stream: clinet::initialize_client("127.0.0.1:9495".to_string()),
         sdl: gamestate::Sdlstate {
             ctx: sdl_context,
             vid: video_subsystem,

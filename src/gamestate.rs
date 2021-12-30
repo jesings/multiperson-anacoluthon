@@ -1,8 +1,9 @@
 use serde::{Serialize, Deserialize};
 use sdl2::*;
-use std::sync::*;
+use std::sync::{*, mpsc::*};
+use std::thread::JoinHandle;
+use std::net::*;
 
-use super::net::clinet::ClientNetstate;
 use super::net::pkt::PktPayload;
 use super::map::grid::Grid;
 use super::player::player::Player;
@@ -11,15 +12,18 @@ use super::player::player::Player;
 //GameState will always be wrapped in an arc, so its immutable members can be accessed without a lock or arc at all?
 //Other, mutable members can either be wrapped in a struct or not
 pub struct ClientGamestate {
-    //pub net: ClientNetstate,
+    pub stream: TcpStream,
     pub sdl: Sdlstate,
     pub pid: usize,
     pub gamedata: Arc<Gamedata>,
 }
 
-pub struct WorkerServerState {
-    pub gameedata: Gamedata,
-    pub broadcaster: bus::Bus<PktPayload>,
+//multithread gamedata soon
+pub struct ServerGamestate {
+    pub workers: Vec<JoinHandle<Result<(), String>>>,
+    pub transmitter: bus::Bus<PktPayload>,
+    pub reciever: Receiver<PktPayload>,
+    pub gamedata: Arc<Gamedata>,
 }
 
 // todo: jonathicc decide what the mutex guards guard
