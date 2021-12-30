@@ -1,4 +1,5 @@
 use std::net::*;
+use std::sync::*;
 use std::io::{Read, IoSlice, Write};
 
 use crate::gamestate::GDTuple;
@@ -61,12 +62,12 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
     }
 }
 
-pub fn send_pkt(stream: &mut TcpStream, payload: PktPayload) -> Result<usize, String> {
+pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usize, String> {
     let header;
     let paybuf;
-    match payload {
-        PktPayload::Gamedata(gdt) => {
-            paybuf = if let Ok(s) = bincode::serialize(&gdt) {
+    match *payload {
+        PktPayload::Gamedata(ref gdt) => {
+            paybuf = if let Ok(s) = bincode::serialize(gdt) {
                 s
             } else {
                 return Err("Could not serialize gamedata!".to_string());

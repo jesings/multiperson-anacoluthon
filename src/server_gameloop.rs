@@ -1,11 +1,11 @@
 use std::sync::{*, mpsc::*};
 
-use crate::gamestate::Gamedata;
+use crate::gamestate::{Gamedata, GDTuple};
 use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
 
-pub fn serveloop((stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<PktPayload>) -> Result<(), String> {
+pub fn serveloop((stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>) -> Result<(), String> {
     let tx = sender;
     let rx = br;
 
@@ -21,15 +21,19 @@ pub fn gameloop() {
 
     let (mpsc_tx, mpsc_rx) = channel();
 
-    //uhh what about more than this?
-    let gd = Arc::new(Gamedata {
-        players: vec![Arc::new(Mutex::new(Player::test_player(0)))],
-        grid: Grid::gen_blank_grid(480, 640),
-    });
-
-    servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc);
-
+    let seed = rand::random::<i128>();
+    let mut playarrs = vec!();
+    for i in 0..streams.len() {
+        playarrs.push(Player::test_player(i));
+    }
     //now transmit gamedata
+    spmc.broadcast(Arc::new(PktPayload::Gamedata(GDTuple(playarrs.clone(), seed))));
+
+    let gd = Arc::new(Gamedata {
+        players: playarrs.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        grid: Grid::gen_blank_grid(640, 480),
+    });
+    let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc);
 
     loop {
     }

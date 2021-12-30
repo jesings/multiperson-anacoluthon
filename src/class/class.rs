@@ -5,7 +5,7 @@ use std::time::Duration;
 use crate::gamestate::*;
 use super::void_orifice::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Class {
     VoidOrifice(VoidOrifice)
 }

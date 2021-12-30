@@ -7,7 +7,7 @@ use super::class::*;
 use crate::map::grid::*;
 use crate::gamestate::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct VoidOrifice {
     mov_cd: Duration,
     mov_next: Duration,

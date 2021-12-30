@@ -21,7 +21,7 @@ pub struct ClientGamestate {
 //multithread gamedata soon
 pub struct ServerGamestate {
     pub workers: Vec<JoinHandle<Result<(), String>>>,
-    pub transmitter: bus::Bus<PktPayload>,
+    pub transmitter: bus::Bus<Arc<PktPayload>>,
     pub reciever: Receiver<PktPayload>,
     pub gamedata: Arc<Gamedata>,
 }
@@ -33,7 +33,7 @@ pub struct Gamedata {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GDTuple(Vec<Player>, i128); //the i128 is the seed for mapgen
+pub struct GDTuple(pub Vec<Player>, pub i128); //the i128 is the seed for mapgen
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mod

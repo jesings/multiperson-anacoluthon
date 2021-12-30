@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::class::class::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Player {
     pub pid: usize,
     pub pos: (isize, isize),

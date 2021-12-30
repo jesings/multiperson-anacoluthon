@@ -27,7 +27,7 @@ pub fn initialize_server(listen_ip_str: String) -> Vec<(TcpStream, SocketAddr)> 
 }
 
 //consumes the self object
-pub fn launch_server_workers(mut strms: Vec<(TcpStream, SocketAddr)>, gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<PktPayload>) -> Vec<thread::JoinHandle<Result<(), String>>> {
+pub fn launch_server_workers(mut strms: Vec<(TcpStream, SocketAddr)>, gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<Arc<PktPayload>>) -> Vec<thread::JoinHandle<Result<(), String>>> {
     let mut launched = vec!();
     for stream in strms.drain(..) {
         let new_gd_handle = gd.clone();
