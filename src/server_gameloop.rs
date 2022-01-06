@@ -5,9 +5,9 @@ use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
 
-pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>) -> Result<(), String> {
+pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>, runningstate: Arc<atomic::AtomicBool>, index: usize) -> Result<(), String> {
 
-    pkt::send_pkt(&mut stream, Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: 0i128}))).expect("Could not send initialization packet");
+    pkt::send_pkt(&mut stream, Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: 0i128, 2: index}))).expect("Could not send initialization packet");
 
     loop {
         while let Ok(recvd) = pkt::recv_pkt(&mut stream) {
@@ -21,6 +21,10 @@ pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr)
             }
         }
 
+        if !runningstate.load(atomic::Ordering::Relaxed) {
+            break;
+        }
+
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
     }
 
@@ -31,6 +35,8 @@ pub fn gameloop() {
     let streams = servnet::initialize_server("127.0.0.1:9495".to_string());
     let mut spmc = bus::Bus::new(2048);
 
+    let runningstate = Arc::new(atomic::AtomicBool::new(true));
+
     let (mpsc_tx, mpsc_rx) = channel();
 
     let seed = rand::random::<i128>();
@@ -38,14 +44,12 @@ pub fn gameloop() {
     for i in 0..streams.len() {
         playarrs.push(Player::test_player(i));
     }
-    //now transmit gamedata
-    spmc.broadcast(Arc::new(PktPayload::Gamedata(GDTuple(playarrs.clone(), seed))));
 
     let gd = Arc::new(Gamedata {
         players: playarrs.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         grid: Grid::gen_blank_grid(640, 480),
     });
-    let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc);
+    let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, runningstate.clone(), &mut spmc);
 
     //figure out how to kill gracefully
     loop {
@@ -59,6 +63,13 @@ pub fn gameloop() {
                 }
             }
         }
+
+        if Arc::strong_count(runningstate) == 1 {
+            break;
+        }
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
+    }
+    for handle in handles {
+        handle.join().unwrap();
     }
 }

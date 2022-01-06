@@ -5,6 +5,7 @@ mod net;
 mod gamestate;
 mod map;
 mod client_gameloop;
+mod client_netloop;
 mod server_gameloop;
 mod player;
 mod class;

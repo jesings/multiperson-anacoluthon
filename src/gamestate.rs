@@ -1,10 +1,8 @@
 use serde::{Serialize, Deserialize};
 use sdl2::*;
-use std::sync::{*, mpsc::*};
+use std::sync::*;
 use std::thread::JoinHandle;
-use std::net::*;
 
-use super::net::pkt::PktPayload;
 use super::map::grid::Grid;
 use super::player::player::Player;
 
@@ -12,17 +10,10 @@ use super::player::player::Player;
 //GameState will always be wrapped in an arc, so its immutable members can be accessed without a lock or arc at all?
 //Other, mutable members can either be wrapped in a struct or not
 pub struct ClientGamestate {
-    pub stream: TcpStream,
+    pub handle: JoinHandle<Result<(), String>>,
+    pub runningstate: Arc<atomic::AtomicBool>,
     pub sdl: Sdlstate,
     pub pid: usize,
-    pub gamedata: Arc<Gamedata>,
-}
-
-//multithread gamedata soon
-pub struct ServerGamestate {
-    pub workers: Vec<JoinHandle<Result<(), String>>>,
-    pub transmitter: bus::Bus<Arc<PktPayload>>,
-    pub reciever: Receiver<PktPayload>,
     pub gamedata: Arc<Gamedata>,
 }
 
@@ -33,7 +24,7 @@ pub struct Gamedata {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GDTuple(pub Vec<Player>, pub i128); //the i128 is the seed for mapgen
+pub struct GDTuple(pub Vec<Player>, pub i128, pub usize); //the i128 is the seed for mapgen, the usize is the pid
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mod
