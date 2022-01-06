@@ -7,6 +7,8 @@ use crate::map::grid::*;
 
 pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>) -> Result<(), String> {
 
+    pkt::send_pkt(&mut stream, Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: 0i128}))).expect("Could not send initialization packet");
+
     loop {
         while let Ok(recvd) = pkt::recv_pkt(&mut stream) {
             sender.send(recvd).unwrap();
@@ -14,7 +16,9 @@ pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr)
         //if this doesn't run, assume for now it's just because we're nonblocking
 
         while let Ok(recvd) = br.try_recv() {
-            pkt::send_pkt(&mut stream, recvd);
+            if let Err(s) = pkt::send_pkt(&mut stream, recvd) {
+                println!("{} for address {}", s, addr);
+            }
         }
 
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
@@ -43,15 +47,17 @@ pub fn gameloop() {
     });
     let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc);
 
+    //figure out how to kill gracefully
     loop {
-        let mut differences = vec!();
         while let Ok(recvd) = mpsc_rx.try_recv() {
             if let PktPayload::Delta(deltalist) = recvd {
                 for delta in deltalist {
-                    differences.push(delta);
+                    let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
+                    deltaplayer.pos.0 += delta.poschange.0;
+                    deltaplayer.pos.1 += delta.poschange.1;
+                    //check that this position is valid, if not revert!?
                 }
             }
-
         }
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
     }

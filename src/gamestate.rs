@@ -47,5 +47,5 @@ pub struct Sdlstate {
 #[derive(Serialize, Deserialize)]
 pub struct DeltaEvent {
     pub pid: usize,
-    pub newpos: (isize, isize), //maybe instead we should do the change in position? not important
+    pub poschange: (isize, isize),
 }

@@ -18,8 +18,19 @@ fn init_game() -> gamestate::ClientGamestate {
     let canvas = window.into_canvas().build().unwrap();
 
     let event_pump = sdl_context.event_pump().unwrap();
+    let mut upstream = clinet::initialize_client("127.0.0.1:9495".to_string());
+    let mut gdt = if let pkt::PktPayload::Gamedata(fgd) = pkt::recv_pkt(&mut upstream).expect("Did not recieve gamedata during initialization!") {
+        fgd
+    } else {
+        panic!("Incorrect packet type recieved during initialization");
+    };
+    //generate grid from gdt seed
+    let gamedata =  Arc::new(gamestate::Gamedata {
+        players: gdt.0.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        grid: Grid::gen_blank_grid(480, 640),
+    });
     gamestate::ClientGamestate {
-        stream: clinet::initialize_client("127.0.0.1:9495".to_string()),
+        stream:  upstream,
         sdl: gamestate::Sdlstate {
             ctx: sdl_context,
             vid: video_subsystem,
@@ -27,10 +38,7 @@ fn init_game() -> gamestate::ClientGamestate {
             canv: Mutex::new(canvas),
         },
         pid: 0,
-        gamedata: Arc::new(gamestate::Gamedata {
-            players: vec![Arc::new(Mutex::new(Player::test_player(0)))],
-            grid: Grid::gen_blank_grid(480, 640),
-        }),
+        gamedata
     }
 }
 
