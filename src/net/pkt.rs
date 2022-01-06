@@ -3,10 +3,11 @@ use std::sync::*;
 use std::io::{Read, IoSlice, Write};
 
 use crate::gamestate::GDTuple;
+use crate::gamestate::DeltaEvent;
 
 pub enum PktPayload {
     Gamedata(GDTuple), //initial, available on request
-    Delta, //should return some delta structure
+    Delta(Vec<DeltaEvent>), //should return some delta structure
 }
 
 #[repr(u8)]
@@ -57,7 +58,8 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
             return Ok(PktPayload::Gamedata(payload));
         }
         PktType::Delta => {
-            return Ok(PktPayload::Delta);
+            let payload: Vec<DeltaEvent> = bincode::deserialize(payloadbuf.as_slice()).unwrap();
+            return Ok(PktPayload::Delta(payload));
         }
     }
 }
@@ -74,8 +76,13 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
             };
             header = PktHeader {tag: PktType::FullGamedata, payload_len: paybuf.len()};
         }
-        PktPayload::Delta => {
-            unreachable!(); //uhhh
+        PktPayload::Delta(ref deltavec) => {
+            paybuf = if let Ok(s) = bincode::serialize(deltavec) {
+                s
+            } else {
+                return Err("Could not serialize deltas!".to_string());
+            };
+            header = PktHeader {tag: PktType::Delta, payload_len: paybuf.len()};
         }
     }
     let io_header = IoSlice::new(unsafe { 
