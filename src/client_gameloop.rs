@@ -35,8 +35,9 @@ fn init_game() -> gamestate::ClientGamestate {
     let gdc = gamedata.clone();
     let runningstatebool = Arc::new(atomic::AtomicBool::new(true));
     let rsbc = runningstatebool.clone();
+    let (sender, recver) = mpsc::channel();
     let handle = thread::spawn(move || {
-        client_netloop::netloop(upstream, gdc, pid, rsbc)
+        client_netloop::netloop(upstream, gdc, pid, rsbc, recver)
     });
     gamestate::ClientGamestate {
         handle,
@@ -48,7 +49,8 @@ fn init_game() -> gamestate::ClientGamestate {
             canv: Mutex::new(canvas),
         },
         pid,
-        gamedata
+        gamedata,
+        sender
     }
 }
 
@@ -84,7 +86,7 @@ pub fn gameloop() -> Result<(), String> {
             };
         }
         for callback in callstack {
-            (callback)(gs.gamedata.clone());
+            (callback)(gs.gamedata.clone(), &gs.sender);
         }
         // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());
         // The rest of the game loop goes here...

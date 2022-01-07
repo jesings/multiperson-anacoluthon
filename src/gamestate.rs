@@ -1,10 +1,11 @@
 use serde::{Serialize, Deserialize};
 use sdl2::*;
-use std::sync::*;
+use std::sync::{*, mpsc};
 use std::thread::JoinHandle;
 
 use super::map::grid::Grid;
 use super::player::player::Player;
+use super::net::pkt::PktPayload;
 
 
 //GameState will always be wrapped in an arc, so its immutable members can be accessed without a lock or arc at all?
@@ -15,6 +16,7 @@ pub struct ClientGamestate {
     pub sdl: Sdlstate,
     pub pid: usize,
     pub gamedata: Arc<Gamedata>,
+    pub sender: mpsc::Sender<PktPayload>,
 }
 
 // todo: jonathicc decide what the mutex guards guard
@@ -28,7 +30,7 @@ pub struct Gamedata {
 pub struct GDTuple(pub Vec<Player>, pub i128, pub usize); //the i128 is the seed for mapgen, the usize is the pid
 
 //gamedata struct, shared between client and server?
-//nothing needs it as mod
+//nothing needs it as mut
 pub struct Sdlstate {
     pub ctx: Sdl,
     pub vid: VideoSubsystem,

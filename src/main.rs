@@ -12,10 +12,18 @@ mod class;
 mod render;
 
 fn main() {
+    let mut server = true;
+    for argument in std::env::args() {
+        if argument.as_str() == "noserver" {
+            server = false;
+        }
+    }
     let client = std::thread::spawn(move || {
         client_gameloop::gameloop()
     });
-    server_gameloop::gameloop();
+    if server {
+        server_gameloop::gameloop();
+    }
     client.join().unwrap().unwrap();
 }
 

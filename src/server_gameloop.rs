@@ -89,9 +89,8 @@ pub fn gameloop() {
             let frontel = broadcasts_needed.pop_front().unwrap();
             let tryfront = Arc::new(frontel);
             if let Err(_) = spmc.try_broadcast(tryfront.clone()) {
-                break;
-            } else {
                 broadcasts_needed.push_front(Arc::try_unwrap(tryfront).unwrap());
+                break;
             }
         }
 
