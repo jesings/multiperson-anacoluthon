@@ -12,19 +12,29 @@ mod class;
 mod render;
 
 fn main() {
-    let mut server = true;
+    let mut hasserver = true;
+    let mut hasclient = true;
     for argument in std::env::args() {
-        if argument.as_str() == "noserver" {
-            server = false;
+        match argument.as_str() {
+            "noserver" => {hasserver = false;}
+            "noclient" => {hasclient = false;}
+            _ => {}
         }
     }
-    let client = std::thread::spawn(move || {
-        client_gameloop::gameloop()
-    });
-    if server {
+
+    if hasclient {
+        let client = std::thread::spawn(move || {
+            client_gameloop::gameloop()
+        });
+        if hasserver {
+            server_gameloop::gameloop();
+        }
+        client.join().unwrap().unwrap();
+    } else if hasserver {
         server_gameloop::gameloop();
+    } else {
+        eprintln!("Wtfrick is the point of you running am2 anyway???");
     }
-    client.join().unwrap().unwrap();
 }
 
 /*

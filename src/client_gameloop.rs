@@ -9,6 +9,9 @@ use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
 
+const IPADDR: &str = "127.0.0.1";
+const PORT: u16 = 9495;
+
 fn init_game() -> gamestate::ClientGamestate {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -18,7 +21,8 @@ fn init_game() -> gamestate::ClientGamestate {
     let canvas = window.into_canvas().build().unwrap();
 
     let event_pump = sdl_context.event_pump().unwrap();
-    let mut upstream = clinet::initialize_client("127.0.0.1:9495".to_string());
+    let ipstr = format!("{}:{}", IPADDR, PORT);
+    let mut upstream = clinet::initialize_client(ipstr);
     let mut gdt = if let pkt::PktPayload::Gamedata(fgd) = pkt::recv_pkt(&mut upstream).expect("Did not recieve gamedata during initialization!") {
         fgd
     } else {

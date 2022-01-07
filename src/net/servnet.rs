@@ -19,7 +19,7 @@ pub fn initialize_server(listen_ip_str: String) -> Vec<(TcpStream, SocketAddr)> 
     let loopstarttime = Instant::now();
     while Instant::now().duration_since(loopstarttime).as_secs() < ACCEPT_WAITTIME {
         if let Ok(tcpl) = server_listener.accept() {
-            tcpl.0.set_nonblocking(true);
+            tcpl.0.set_nonblocking(true).unwrap();
             streamvec.push(tcpl);
         }
     }
