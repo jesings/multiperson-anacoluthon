@@ -6,6 +6,8 @@ use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
 
+const NET_HZ: u32 = 1000;
+
 pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>, livelisteners: Arc<atomic::AtomicUsize>, index: usize) -> Result<(), String> {
 
     pkt::send_pkt(&mut stream, Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: 0i128, 2: index}))).expect("Could not send initialization packet");
@@ -44,7 +46,7 @@ pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr)
             break;
         }
 
-        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
+        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / NET_HZ));
     }
 
     return Ok(());
@@ -98,7 +100,7 @@ pub fn gameloop() {
             break;
         }
 
-        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 1000));
+        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / NET_HZ));
     }
     for handle in handles {
         handle.join().unwrap();

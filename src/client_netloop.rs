@@ -5,6 +5,8 @@ use crate::gamestate::{Gamedata};
 use crate::net::pkt;
 use crate::net::pkt::PktPayload;
 
+const CLIENT_NET_HZ: u32 = 1000;
+
 pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc: Arc<atomic::AtomicBool>, recver: mpsc::Receiver<PktPayload>) -> Result<(), String> {
     loop {
         match pkt::recv_pkt(&mut stream) {
@@ -47,6 +49,7 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
         if !rsbc.load(atomic::Ordering::Relaxed) {
             break;
         }
+        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / CLIENT_NET_HZ));
     }
     return Ok(());
 }

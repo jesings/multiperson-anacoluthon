@@ -9,6 +9,8 @@ use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
 
+const FRAMERATE: u32 = 60;
+
 const IPADDR: &str = "127.0.0.1";
 const PORT: u16 = 9495;
 
@@ -97,7 +99,7 @@ pub fn gameloop() -> Result<(), String> {
 
         gs.render();
 
-        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMERATE));
     }
 
     gs.handle.join().unwrap().unwrap();
