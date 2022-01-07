@@ -28,14 +28,15 @@ pub fn initialize_server(listen_ip_str: String) -> Vec<(TcpStream, SocketAddr)> 
 }
 
 //consumes the self object
-pub fn launch_server_workers(mut strms: Vec<(TcpStream, SocketAddr)>, gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<Arc<PktPayload>>, runningstate: Arc<atomic::AtomicBool>) -> Vec<thread::JoinHandle<Result<(), String>>> {
+pub fn launch_server_workers(mut strms: Vec<(TcpStream, SocketAddr)>, gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<Arc<PktPayload>>, runningstate: Arc<atomic::AtomicUsize>) -> Vec<thread::JoinHandle<Result<(), String>>> {
     let mut launched = vec!();
     for (index, stream) in strms.drain(..).enumerate() {
         let new_gd_handle = gd.clone();
         let new_sender = sender.clone();
         let new_br = bus.add_rx();
+        let new_rs = runningstate.clone();
         launched.push(thread::spawn(move || {
-            serveloop(stream, new_gd_handle, new_sender, new_br, runningstate, index)
+            serveloop(stream, new_gd_handle, new_sender, new_br, new_rs, index)
         }));
     }
     launched

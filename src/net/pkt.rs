@@ -1,10 +1,11 @@
 use std::net::*;
 use std::sync::*;
-use std::io::{Read, IoSlice, Write};
+use std::io::{Read, IoSlice, Write, ErrorKind};
 
 use crate::gamestate::GDTuple;
 use crate::gamestate::DeltaEvent;
 
+#[derive(Debug)]
 pub enum PktPayload {
     Gamedata(GDTuple), //initial, available on request
     Delta(Vec<DeltaEvent>), //should return some delta structure
@@ -28,14 +29,26 @@ struct PktHeader {
 
 pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
     let mut headerbuf = [0; std::mem::size_of::<PktHeader>()];
-    if let Ok(num) = stream.read(&mut headerbuf) {
-        if num == 0 {
-            return Err("Socket has closed".to_string());
-        } else if num < std::mem::size_of::<PktHeader>() {
-            return Err("Packet header was malformed".to_string());
+    match stream.read(&mut headerbuf) {
+
+        Ok(num) => {
+            if num == 0 {
+                return Err("Fatal".to_string());
+            } else if num < std::mem::size_of::<PktHeader>() {
+                return Err("Packet header was malformed".to_string());
+            }
+        } 
+        Err(ref e) => {
+            match e.kind() {
+                ErrorKind::WouldBlock | 
+                ErrorKind::Interrupted => {
+                    return Err("No packet available".to_string());
+                }
+                _ => {
+                    return Err("Fatal".to_string());
+                }
+            }
         }
-    } else {
-        return Err("No packet found".to_string());
     }
 
     let header: PktHeader = unsafe {
@@ -48,7 +61,7 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
     }
 
     if let Err(_) = stream.read(payloadbuf.as_mut_slice()) {
-        return Err("Malformed packet payload".to_string());
+        return Err("Fatal".to_string());
     }
 
     //deserialize payload
@@ -90,9 +103,20 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
             as *const u8, std::mem::size_of::<PktHeader>())
     });
     let io_payload = IoSlice::new(paybuf.as_slice());
-    if let Ok(sz) = stream.write_vectored(&[io_header, io_payload]) {
-        Ok(sz)
-    } else {
-        Err("Could not write to stream!".to_string())
+    match stream.write_vectored(&[io_header, io_payload]) {
+        Ok(sz) => {
+            Ok(sz)
+        }
+        Err(ref e) => {
+            match e.kind() {
+                ErrorKind::WouldBlock | 
+                ErrorKind::Interrupted => {
+                    Err("Could not write to stream!".to_string())
+                }
+                _ => {
+                    Err("Fatal".to_string())
+                }
+            }
+        }
     }
 }

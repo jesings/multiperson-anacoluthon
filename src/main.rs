@@ -12,10 +12,11 @@ mod class;
 mod render;
 
 fn main() {
-    std::thread::spawn(move || {
-        client_gameloop::gameloop();
+    let client = std::thread::spawn(move || {
+        client_gameloop::gameloop()
     });
     server_gameloop::gameloop();
+    client.join().unwrap().unwrap();
 }
 
 /*

@@ -18,12 +18,13 @@ pub struct ClientGamestate {
 }
 
 // todo: jonathicc decide what the mutex guards guard
+#[derive(Debug)]
 pub struct Gamedata {
     pub players: Vec<Arc<Mutex<Player>>>,
     pub grid: Grid,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GDTuple(pub Vec<Player>, pub i128, pub usize); //the i128 is the seed for mapgen, the usize is the pid
 
 //gamedata struct, shared between client and server?
@@ -35,7 +36,7 @@ pub struct Sdlstate {
     pub canv: Mutex<render::Canvas<video::Window>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DeltaEvent {
     pub pid: usize,
     pub poschange: (isize, isize),

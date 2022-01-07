@@ -24,6 +24,7 @@ fn init_game() -> gamestate::ClientGamestate {
     } else {
         panic!("Incorrect packet type recieved during initialization");
     };
+    upstream.set_nonblocking(true).unwrap();
     //generate grid from gdt seed
     let pid = gdt.2;
     let gamedata =  Arc::new(gamestate::Gamedata {
@@ -51,7 +52,7 @@ fn init_game() -> gamestate::ClientGamestate {
     }
 }
 
-pub fn gameloop() {
+pub fn gameloop() -> Result<(), String> {
     let gs = init_game();
 
     let start = Instant::now();
@@ -94,4 +95,6 @@ pub fn gameloop() {
     }
 
     gs.handle.join().unwrap().unwrap();
+
+    return Ok(());
 }
