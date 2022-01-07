@@ -8,6 +8,7 @@ mod client_gameloop;
 mod player;
 mod class;
 mod render;
+mod control;
 
 fn main() {
     client_gameloop::gameloop();
