@@ -23,13 +23,15 @@ fn main() {
     }
 
     if hasclient {
-        let client = std::thread::spawn(move || {
-            client_gameloop::gameloop()
-        });
         if hasserver {
-            server_gameloop::gameloop();
+            let server = std::thread::spawn(move || {
+                server_gameloop::gameloop()
+            });
+            client_gameloop::gameloop().unwrap();
+            server.join().unwrap();
+        } else {
+            client_gameloop::gameloop().unwrap();
         }
-        client.join().unwrap().unwrap();
     } else if hasserver {
         server_gameloop::gameloop();
     } else {
