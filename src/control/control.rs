@@ -81,39 +81,19 @@ impl Controller {
             };
         }
 
-        match self.u {
-            Keystate::Press(tim) => {
+        let pth = |ks: &mut Keystate| {
+            if let Keystate::Press(tim) = *ks {
                 if now > tim + KEYHOLDDELAY {
-                    self.u = Keystate::Hold;
+                    *ks = Keystate::Hold;
                 }
             }
-            _ => {}
-        }
-        match self.d {
-            Keystate::Press(tim) => {
-                if now > tim + KEYHOLDDELAY {
-                    self.d = Keystate::Hold;
-                }
-            }
-            _ => {}
-        }
-        match self.l {
-            Keystate::Press(tim) => {
-                if now > tim + KEYHOLDDELAY {
-                    self.l = Keystate::Hold;
-                }
-            }
-            _ => {}
-        }
-        match self.r {
-            Keystate::Press(tim) => {
-                if now > tim + KEYHOLDDELAY {
-                    self.r = Keystate::Hold;
-                }
-            }
-            _ => {}
-        }
+        };
         
+        pth(&mut self.u);
+        pth(&mut self.d);
+        pth(&mut self.l);
+        pth(&mut self.r);
+          
         let dir = match (self.u, self.d, self.l, self.r) {
             (Keystate::Hold | Keystate::Tap, Keystate::None, Keystate::None, Keystate::None) => Some((0, -1)),
             (Keystate::None, Keystate::Hold | Keystate::Tap, Keystate::None, Keystate::None) => Some((0, 1)),
@@ -127,40 +107,33 @@ impl Controller {
 
             _ => None,
         };
-
-        if self.u == Keystate::Tap {
-            self.u = Keystate::None;
-        }
-        if self.d == Keystate::Tap {
-            self.d = Keystate::None;
-        }
-        if self.l == Keystate::Tap {
-            self.l = Keystate::None;
-        }
-        if self.r == Keystate::Tap {
-            self.r = Keystate::None;
-        }
+        
+        let ttn = |ks: &mut Keystate| {
+            if *ks == Keystate::Tap {
+                *ks = Keystate::None;
+            }
+        };
+        ttn(&mut self.u);
+        ttn(&mut self.d);
+        ttn(&mut self.l);
+        ttn(&mut self.r);
+        
         
         match dir {
             Some(dir) => {
                 callstack.push(gamedata.players[pid].lock().unwrap().class.mov(pid, dir, now));
-                match self.u {
-                    Keystate::Press(_) => { self.u = Keystate::Hold; }
-                    _ => {}
-                }
-                match self.d {
-                    Keystate::Press(_) => { self.d = Keystate::Hold; }
-                    _ => {}
-                }
-                match self.l {
-                    Keystate::Press(_) => { self.l = Keystate::Hold; }
-                    _ => {}
-                }
-                match self.r {
-                    Keystate::Press(_) => { self.r = Keystate::Hold; }
-                    _ => {}
-                }
-                    
+                
+                let pth = |ks: &mut Keystate| {
+                    if let Keystate::Press(_) = *ks {
+                        *ks = Keystate::Hold;
+                    }
+                };
+                
+                pth(&mut self.u);
+                pth(&mut self.d);
+                pth(&mut self.l);
+                pth(&mut self.r);
+                
             },
             None => {},
         }
