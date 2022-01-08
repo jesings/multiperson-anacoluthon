@@ -30,6 +30,9 @@ impl Keyboard {
     // pub fn from_file() -> Self {..}
     
     pub fn convert(&self, key: Keycode) -> Action {
-        *self.hm.get(&key).unwrap()
+        match self.hm.get(&key) {
+            Some(action) => *action,
+            None => Action::None
+        }
     }
 }

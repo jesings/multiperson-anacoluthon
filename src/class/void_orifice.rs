@@ -15,7 +15,7 @@ pub struct VoidOrifice {
 impl VoidOrifice {
     pub fn new() -> Self {
         VoidOrifice {
-            mov_cd: Duration::from_millis(500),
+            mov_cd: Duration::from_millis(300),
             mov_next: Duration::from_millis(0),
         }
     }

@@ -4,5 +4,6 @@ pub enum Action {
     Down,
     Left,
     Right,
-    Skill(u8)
+    Skill(u8),
+    None
 }
