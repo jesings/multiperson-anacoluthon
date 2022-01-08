@@ -40,10 +40,11 @@ pub fn gameloop() {
     let start = Instant::now();
     let mut i = 0;
     'running: loop {
-        let now = start.elapsed();
+        let now = Instant::now();
+        let gametime = now.checked_duration_since(start).unwrap();
         i = (i + 1) % 255;
         
-        if !controller.control(&gs.sdl.pump, now, gs.gamedata.clone(), gs.pid) {
+        if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid) {
             break 'running;
         }
         

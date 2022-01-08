@@ -35,7 +35,7 @@ impl Controller {
             r: Keystate::None,
         }
     }
-    pub fn control(&mut self, pump: &Mutex<EventPump>, now: Duration, gamedata: Arc<Gamedata>, pid: usize) -> bool {
+    pub fn control(&mut self, pump: &Mutex<EventPump>, gametime: Duration, gamedata: Arc<Gamedata>, pid: usize) -> bool {
         let mut callstack = vec![];
         
         for event in pump.lock().unwrap().poll_iter() {
@@ -46,16 +46,16 @@ impl Controller {
                 event::Event::KeyDown {keycode: Some(keyp), repeat: false, .. } => {
                     match self.k.convert(keyp) {
                         Action::Up => {
-                            self.u = Keystate::Press(now);
+                            self.u = Keystate::Press(gametime);
                         },
                         Action::Down => {
-                            self.d = Keystate::Press(now);
+                            self.d = Keystate::Press(gametime);
                         },
                         Action::Left => {
-                            self.l = Keystate::Press(now);
+                            self.l = Keystate::Press(gametime);
                         },
                         Action::Right => {
-                            self.r = Keystate::Press(now);
+                            self.r = Keystate::Press(gametime);
                         },
                         _ => {}
                     }
@@ -83,7 +83,7 @@ impl Controller {
 
         let pth = |ks: &mut Keystate| {
             if let Keystate::Press(tim) = *ks {
-                if now > tim + KEYHOLDDELAY {
+                if gametime > tim + KEYHOLDDELAY {
                     *ks = Keystate::Hold;
                 }
             }
@@ -121,7 +121,7 @@ impl Controller {
         
         match dir {
             Some(dir) => {
-                callstack.push(gamedata.players[pid].lock().unwrap().class.mov(pid, dir, now));
+                callstack.push(gamedata.players[pid].lock().unwrap().class.mov(pid, dir, gametime));
                 
                 let pth = |ks: &mut Keystate| {
                     if let Keystate::Press(_) = *ks {
