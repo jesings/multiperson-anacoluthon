@@ -41,7 +41,7 @@ pub fn gameloop() {
     let mut i = 0;
     'running: loop {
         let now = Instant::now();
-        let gametime = now.checked_duration_since(start).unwrap();
+        let gametime = now.duration_since(start);
         i = (i + 1) % 255;
         
         if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid) {
