@@ -26,8 +26,8 @@ pub struct Gamedata {
     pub grid: Grid,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GDTuple(pub Vec<Player>, pub i128, pub usize); //the i128 is the seed for mapgen, the usize is the pid
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GDTuple(pub Vec<Player>, pub [u8; 32], pub usize); //the i128 is the seed for mapgen, the usize is the pid
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mut
@@ -38,7 +38,7 @@ pub struct Sdlstate {
     pub canv: Mutex<render::Canvas<video::Window>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct DeltaEvent {
     pub pid: usize,
     pub poschange: (isize, isize),
