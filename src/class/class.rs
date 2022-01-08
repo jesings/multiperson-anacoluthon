@@ -12,7 +12,7 @@ pub enum Class {
 }
 
 impl Class {
-    pub fn mov(&mut self, pid: usize, dir: (isize, isize), now: Duration) -> impl Fn(Arc<Gamedata>, &mpsc::Sender<PktPayload>) -> () {
+    pub fn mov(&mut self, pid: usize, dir: (isize, isize), now: Duration) -> Option<impl Fn(Arc<Gamedata>, &mpsc::Sender<PktPayload>) -> ()> {
         match self {
             Class::VoidOrifice(void_orifice) => void_orifice.mov(pid, dir, now),
         }

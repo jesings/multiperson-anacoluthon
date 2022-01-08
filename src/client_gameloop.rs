@@ -2,8 +2,7 @@ use crate::gamestate;
 use crate::client_netloop;
 use crate::net::*;
 use crate::map::grid::*;
-
-use sdl2::*;
+use crate::control::control::*;
 
 use std::sync::*;
 use std::time::{Duration, Instant};
@@ -62,38 +61,18 @@ fn init_game() -> gamestate::ClientGamestate {
 
 pub fn gameloop() -> Result<(), String> {
     let gs = init_game();
-
+    let mut controller = Controller::new();
     let start = Instant::now();
     let mut i = 0;
     'running: loop {
-        let now = start.elapsed();
+        let now = Instant::now();
+        let gametime = now.duration_since(start);
         i = (i + 1) % 255;
-        let mut callstack = vec![];
-        for event in gs.sdl.pump.lock().unwrap().poll_iter() {
-            match event {
-                event::Event::Quit {..} |
-                event::Event::KeyDown { keycode: Some(keyboard::Keycode::Escape), .. } => {
-                    gs.runningstate.store(false, atomic::Ordering::Relaxed);
-                    break 'running
-                },
-                event::Event::KeyDown {keycode: Some(keyboard::Keycode::W), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, -1), now));
-                },
-                event::Event::KeyDown {keycode: Some(keyboard::Keycode::A), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (-1, 0), now));
-                },
-                event::Event::KeyDown {keycode: Some(keyboard::Keycode::S), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (0, 1), now));
-                },
-                event::Event::KeyDown {keycode: Some(keyboard::Keycode::D), repeat: false, .. } => {
-                    callstack.push(gs.gamedata.players[gs.pid].lock().unwrap().class.mov(gs.pid, (1, 0), now));
-                },
-                _ => {}
-            };
+        
+        if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid, &gs.sender) {
+            break 'running;
         }
-        for callback in callstack {
-            (callback)(gs.gamedata.clone(), &gs.sender);
-        }
+        
         // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());
         // The rest of the game loop goes here...
 

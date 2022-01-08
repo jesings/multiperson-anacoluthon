@@ -21,23 +21,21 @@ impl VoidOrifice {
             mov_next: Duration::from_millis(0),
         }
     }
-    pub fn mov(&mut self, pid: usize, dir: (isize, isize), now: Duration) -> impl Fn(Arc<Gamedata>, &mpsc::Sender<PktPayload>) -> () {
-        let drc = match dir {
-            (0, c) => (0, c),
-            (r, _) => (r, 0),
-        };
+    pub fn mov(&mut self, pid: usize, dir: (isize, isize), now: Duration) -> Option<impl Fn(Arc<Gamedata>, &mpsc::Sender<PktPayload>) -> ()> {
         let offcd = self.mov_next < now;
         if offcd {
             self.mov_next = now + self.mov_cd;
+        } else {
+            return None;
         }
-        move |gamedata: Arc<Gamedata>, sender: &mpsc::Sender<PktPayload>| {
+        Some(move |gamedata: Arc<Gamedata>, sender: &mpsc::Sender<PktPayload>| {
             if offcd {
                 let pl = &mut gamedata.players[pid].lock().unwrap();
                 // v-w-y <- wubbles the funny collision check
-                pl.pos = (pl.pos.0 + drc.0, pl.pos.1 + drc.1);
-                sender.send(PktPayload::Delta(vec!(DeltaEvent{pid: pid, poschange: drc}))).unwrap();
+                pl.pos = (pl.pos.0 + dir.0, pl.pos.1 + dir.1);
+                sender.send(PktPayload::Delta(vec!(DeltaEvent{pid: pid, poschange: dir}))).unwrap();
             }
-        }
+        })
     }
 
 }

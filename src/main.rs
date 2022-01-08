@@ -10,6 +10,7 @@ mod server_gameloop;
 mod player;
 mod class;
 mod render;
+mod control;
 
 fn main() {
     let mut hasserver = true;
