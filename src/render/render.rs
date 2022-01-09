@@ -7,8 +7,8 @@ use rand::prelude::*;
 const TILEWIDTH: u32 = 64;
 const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
-const PLAYERWIDTH: u32 = 30;
-const IPLAYERWIDTH: i32 = 30;
+const PLAYERWIDTH: u32 = TILEWIDTH / 2;
+const IPLAYERWIDTH: i32 = ITILEWIDTH / 2;
 
 impl gamestate::ClientGamestate {
     pub fn render(&self) {
