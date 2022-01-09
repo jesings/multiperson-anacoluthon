@@ -85,8 +85,8 @@ impl gamestate::ClientGamestate {
                 //for the other players, find their tile offset from the current player and render them from that
                 canv.set_draw_color(Color::RGB(255, 0, 0));
                 let otherpos = player.pos;
-                let xdelta = (otherpos.0 - pos.0) as i32;
-                let ydelta = (otherpos.1 - pos.1) as i32;
+                let xdelta = (pos.0 - otherpos.0) as i32;
+                let ydelta = (pos.1 - otherpos.1) as i32;
                 rightrect = Rect::new((icanvsize.0 - IPLAYERWIDTH) / 2 - xdelta * ITILEWIDTH, (icanvsize.1 - IPLAYERWIDTH) / 2 - ydelta * ITILEWIDTH, PLAYERWIDTH, PLAYERWIDTH);
             }
 

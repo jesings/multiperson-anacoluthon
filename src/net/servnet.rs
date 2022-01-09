@@ -1,26 +1,43 @@
-pub use super::net_common::ServerNetstate;
 use std::net::*;
 use std::time::*;
+use std::sync::*;
+use std::thread;
 
-const ACCEPT_WAITTIME: u64 = 10;
+pub use super::pkt::PktPayload;
+use crate::gamestate::Gamedata;
+use crate::server_gameloop::serveloop;
 
-impl ServerNetstate {
-    pub fn initialize_server(listen_ip_str: String) -> Self {
-        let server_listener = TcpListener::bind(listen_ip_str).expect("Server was configured to bind to an invalid address!");
-        let mut streamvec = vec!();
+const ACCEPT_WAITTIME: u64 = 1;
 
-        server_listener.set_nonblocking(true).expect("Could not set listening socket to be nonblocking!");
+pub fn initialize_server(listen_ip_str: String) -> Vec<(TcpStream, SocketAddr)> {
+    let server_listener = TcpListener::bind(listen_ip_str).expect("Server was configured to bind to an invalid address!");
+    let mut streamvec = vec!();
 
-        //do some accepts to create the streams
-        let loopstarttime = Instant::now();
-        while Instant::now().duration_since(loopstarttime).as_secs() < ACCEPT_WAITTIME {
-            if let Ok(tcpl) = server_listener.accept() {
-                streamvec.push(tcpl);
-            }
-        }
+    server_listener.set_nonblocking(true).expect("Could not set listening socket to be nonblocking!");
 
-        Self {
-            streams: streamvec,
+    //do some accepts to create the streams
+    let loopstarttime = Instant::now();
+    while Instant::now().duration_since(loopstarttime).as_secs() < ACCEPT_WAITTIME {
+        if let Ok(tcpl) = server_listener.accept() {
+            tcpl.0.set_nonblocking(true).unwrap();
+            streamvec.push(tcpl);
         }
     }
+
+    streamvec
+}
+
+//consumes the self object
+pub fn launch_server_workers(mut strms: Vec<(TcpStream, SocketAddr)>, gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, bus: &mut bus::Bus<Arc<PktPayload>>, runningstate: Arc<atomic::AtomicUsize>) -> Vec<thread::JoinHandle<Result<(), String>>> {
+    let mut launched = vec!();
+    for (index, stream) in strms.drain(..).enumerate() {
+        let new_gd_handle = gd.clone();
+        let new_sender = sender.clone();
+        let new_br = bus.add_rx();
+        let new_rs = runningstate.clone();
+        launched.push(thread::spawn(move || {
+            serveloop(stream, new_gd_handle, new_sender, new_br, new_rs, index)
+        }));
+    }
+    launched
 }
