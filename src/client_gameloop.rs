@@ -14,7 +14,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window = video_subsystem.window("AMS2", 640, 480).position_centered().build().unwrap();
+    let window = video_subsystem.window("AMS2", WINDOWWIDTH, WINDOWHEIGHT).position_centered().build().unwrap();
 
     let canvas = window.into_canvas().build().unwrap();
 

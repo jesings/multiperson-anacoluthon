@@ -5,7 +5,10 @@ use sdl2::pixels::Color;
 use rand::prelude::*;
 use rand::rngs::*;
 
-const TILEWIDTH: u32 = 64;
+pub const WINDOWWIDTH: u32 = 1600;
+pub const WINDOWHEIGHT: u32 = 900;
+
+const TILEWIDTH: u32 = 40;
 const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
 const PLAYERWIDTH: u32 = 30;
