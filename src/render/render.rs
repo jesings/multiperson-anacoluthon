@@ -3,13 +3,12 @@ use crate::gamestate;
 use sdl2::rect::*;
 use sdl2::pixels::Color;
 use rand::prelude::*;
-use rand::rngs::*;
 
-const TILEWIDTH: u32 = 64;
+const TILEWIDTH: u32 = 40;
 const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
-const PLAYERWIDTH: u32 = 30;
-const IPLAYERWIDTH: i32 = 30;
+const PLAYERWIDTH: u32 = TILEWIDTH / 2;
+const IPLAYERWIDTH: i32 = ITILEWIDTH / 2;
 
 impl gamestate::ClientGamestate {
     pub fn render(&self) {
@@ -20,15 +19,17 @@ impl gamestate::ClientGamestate {
         let pos = gd.players[pid].lock().expect("Could not lock player to get its position.").pos.clone();
 
         let mut canv = self.sdl.canv.lock().expect("Could not lock canvas for rendering!");
-        //canv.clear(); probably unneeded
+        //canv.clear(); unneeded
 
         //get dimensions of the canvas
         let canvsize: (u32, u32) = canv.output_size().expect("Could not get canvas size.");
         let icanvsize = (canvsize.0 as i32, canvsize.1 as i32);
 
         //get corners of grid from that
-        let left_x = -((icanvsize.0 % ITILEWIDTH + ITILEWIDTH) / 2); //initialize to corner position
-        let top_y = -((icanvsize.1 % ITILEWIDTH + ITILEWIDTH) / 2); //initialize to corner position
+        let mut left_x = (icanvsize.0 - ITILEWIDTH)/2 % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        let mut top_y = (icanvsize.1 - ITILEWIDTH)/2 % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        if left_x == -ITILEWIDTH {left_x = 0;}
+        if top_y == -ITILEWIDTH {top_y = 0;}
         let mut rendrect = Rect::new(left_x, top_y, TILEWIDTH, TILEWIDTH);
 
         let player_tile_start_x = (icanvsize.0 / 2 - left_x - 1) / ITILEWIDTH * ITILEWIDTH + left_x; //rounded up
@@ -41,24 +42,19 @@ impl gamestate::ClientGamestate {
             while rendrect.y() < icanvsize.1 {
                 //eventually use copy or copy_ex for textures, get from the grid coord
                 
+                //this better be strength reduced by the compiler or rust is kinda lamer
                 let row_index = (rendrect.y() - player_tile_start_y) / ITILEWIDTH + pos.1 as i32;
                 //now we have the position of the tile from its location relative to the player
+                
 
-                if col_index >= 0 && row_index >= 0 {
-                     let mut seed = [0u8; 32];
-                     for (index, b) in col_index.to_ne_bytes().iter().enumerate() {
-                         seed[index] = *b;
-                     }
-                     for (index, b) in row_index.to_ne_bytes().iter().enumerate() {
-                         seed[index + 4] = *b;
-                     }
-                     let mut sillyrng = StdRng::from_seed(seed);
+                if col_index >= 0 && row_index >= 0 && col_index < gd.grid.cols as i32 && row_index < gd.grid.rows as i32 {
+                    let grid_index = row_index as usize * gd.grid.cols + col_index as usize;
+                    let tile = &gd.grid.tiles[grid_index];
+                    let rshade = tile.texture;
 
-                     let rshade = (sillyrng.next_u32() % 256) as u8;
-
-                     canv.set_draw_color(Color::RGB(rshade, rshade, rshade));
+                    canv.set_draw_color(Color::RGB(rshade, rshade, rshade));
                 } else {
-                     canv.set_draw_color(Color::RGB(0, 0, 0));
+                    canv.set_draw_color(Color::RGB(0, 0, 0));
                 }
                 
                 if let Err(_) = canv.fill_rect(rendrect) {

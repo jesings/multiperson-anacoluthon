@@ -5,7 +5,7 @@ use std::io::{Read, IoSlice, Write, ErrorKind};
 use crate::gamestate::GDTuple;
 use crate::gamestate::DeltaEvent;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PktPayload {
     Gamedata(GDTuple), //initial, available on request
     Delta(Vec<DeltaEvent>), //should return some delta structure

@@ -17,9 +17,10 @@ fn init_game() -> gamestate::ClientGamestate {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window = video_subsystem.window("AMS2", 640, 480).position_centered().build().unwrap();
+    let window = video_subsystem.window("AMS2", 640, 480).resizable().position_centered().build().unwrap();
+    //yo we could set window title and icon using set_title and set_icon
 
-    let canvas = window.into_canvas().build().unwrap();
+    let canvas = window.into_canvas().accelerated().build().unwrap();
 
     let event_pump = sdl_context.event_pump().unwrap();
     let ipstr = format!("{}:{}", IPADDR, PORT);
@@ -30,11 +31,10 @@ fn init_game() -> gamestate::ClientGamestate {
         panic!("Incorrect packet type recieved during initialization");
     };
     upstream.set_nonblocking(true).unwrap();
-    //generate grid from gdt seed
     let pid = gdt.2;
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: gdt.0.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_blank_grid(480, 640),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, gdt.1),
     });
 
     let gdc = gamedata.clone();

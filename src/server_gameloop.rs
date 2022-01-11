@@ -9,8 +9,24 @@ use crate::map::grid::*;
 const NET_HZ: u32 = 1000;
 
 pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>, livelisteners: Arc<atomic::AtomicUsize>, index: usize) -> Result<(), String> {
-
-    pkt::send_pkt(&mut stream, Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: 0i128, 2: index}))).expect("Could not send initialization packet");
+    if let Ok(recvd) = br.recv() {
+        let newpkt;
+        if let PktPayload::Gamedata(gdt) = (*recvd).clone() {
+            let mut newgdt = gdt;
+            newgdt.2 = index;
+            newpkt = PktPayload::Gamedata(newgdt);
+        } else {
+            panic!("Initialization packet was not a gamedata send?");
+        }
+        if let Err(s) = pkt::send_pkt(&mut stream, Arc::new(newpkt)) {
+            if s.as_str() == "Fatal" {
+                livelisteners.fetch_sub(1, atomic::Ordering::Relaxed);
+                return Ok(());
+            }
+        }
+    } else {
+        panic!("Initialization send failed");
+    }
 
     loop {
         let mut killflag = false;
@@ -60,7 +76,11 @@ pub fn gameloop() {
 
     let (mpsc_tx, mpsc_rx) = channel();
 
-    let seed = rand::random::<i128>();
+    let mut mapseed = [0u8; 32];
+    for i in 0..32 {
+        mapseed[i] = rand::random::<u8>();
+    }
+
     let mut playarrs = vec!();
     for i in 0..streams.len() {
         playarrs.push(Player::test_player(i));
@@ -68,9 +88,13 @@ pub fn gameloop() {
 
     let gd = Arc::new(Gamedata {
         players: playarrs.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_blank_grid(640, 480),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed),
     });
+
+
     let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc, livelisteners.clone());
+
+    spmc.broadcast(Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: mapseed, 2: 343})));
 
     //figure out how to kill gracefully
     let mut broadcasts_needed = VecDeque::new();
