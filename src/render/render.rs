@@ -19,15 +19,17 @@ impl gamestate::ClientGamestate {
         let pos = gd.players[pid].lock().expect("Could not lock player to get its position.").pos.clone();
 
         let mut canv = self.sdl.canv.lock().expect("Could not lock canvas for rendering!");
-        //canv.clear(); probably unneeded
+        //canv.clear(); unneeded
 
         //get dimensions of the canvas
         let canvsize: (u32, u32) = canv.output_size().expect("Could not get canvas size.");
         let icanvsize = (canvsize.0 as i32, canvsize.1 as i32);
 
         //get corners of grid from that
-        let left_x = (icanvsize.0 - ITILEWIDTH/2) % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
-        let top_y = (icanvsize.1 - ITILEWIDTH/2) % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        let mut left_x = (icanvsize.0 - ITILEWIDTH)/2 % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        let mut top_y = (icanvsize.1 - ITILEWIDTH)/2 % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        if left_x == -ITILEWIDTH {left_x = 0;}
+        if top_y == -ITILEWIDTH {top_y = 0;}
         let mut rendrect = Rect::new(left_x, top_y, TILEWIDTH, TILEWIDTH);
 
         let player_tile_start_x = (icanvsize.0 / 2 - left_x - 1) / ITILEWIDTH * ITILEWIDTH + left_x; //rounded up
