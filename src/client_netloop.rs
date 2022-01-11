@@ -12,7 +12,7 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
         match pkt::recv_pkt(&mut stream) {
             Ok(recvd) => {
                 match recvd {
-                    PktPayload::Gamedata(_) => {
+                    PktPayload::Initial(_) => {
                         unreachable!();
                     }
                     PktPayload::Delta(deltavec) => {

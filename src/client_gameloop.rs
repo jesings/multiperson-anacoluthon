@@ -25,16 +25,16 @@ fn init_game() -> gamestate::ClientGamestate {
     let event_pump = sdl_context.event_pump().unwrap();
     let ipstr = format!("{}:{}", IPADDR, PORT);
     let mut upstream = clinet::initialize_client(ipstr);
-    let mut gdt = if let pkt::PktPayload::Gamedata(fgd) = pkt::recv_pkt(&mut upstream).expect("Did not recieve gamedata during initialization!") {
+    let mut initdata = if let pkt::PktPayload::Initial(fgd) = pkt::recv_pkt(&mut upstream).expect("Did not recieve gamedata during initialization!") {
         fgd
     } else {
         panic!("Incorrect packet type recieved during initialization");
     };
     upstream.set_nonblocking(true).unwrap();
-    let pid = gdt.2;
+    let pid = initdata.pid.unwrap();
     let gamedata =  Arc::new(gamestate::Gamedata {
-        players: gdt.0.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, gdt.1),
+        players: initdata.players.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed),
     });
 
     let gdc = gamedata.clone();
