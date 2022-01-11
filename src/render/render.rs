@@ -4,7 +4,7 @@ use sdl2::rect::*;
 use sdl2::pixels::Color;
 use rand::prelude::*;
 
-const TILEWIDTH: u32 = 64;
+const TILEWIDTH: u32 = 40;
 const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
 const PLAYERWIDTH: u32 = TILEWIDTH / 2;
@@ -26,8 +26,8 @@ impl gamestate::ClientGamestate {
         let icanvsize = (canvsize.0 as i32, canvsize.1 as i32);
 
         //get corners of grid from that
-        let left_x = -((icanvsize.0 % ITILEWIDTH + ITILEWIDTH) / 2); //initialize to corner position
-        let top_y = -((icanvsize.1 % ITILEWIDTH + ITILEWIDTH) / 2); //initialize to corner position
+        let left_x = (icanvsize.0 - ITILEWIDTH/2) % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
+        let top_y = (icanvsize.1 - ITILEWIDTH/2) % ITILEWIDTH - ITILEWIDTH; //initialize to corner position
         let mut rendrect = Rect::new(left_x, top_y, TILEWIDTH, TILEWIDTH);
 
         let player_tile_start_x = (icanvsize.0 / 2 - left_x - 1) / ITILEWIDTH * ITILEWIDTH + left_x; //rounded up
@@ -45,7 +45,7 @@ impl gamestate::ClientGamestate {
                 //now we have the position of the tile from its location relative to the player
                 
 
-                if col_index >= 0 && row_index >= 0 {
+                if col_index >= 0 && row_index >= 0 && col_index < gd.grid.cols as i32 && row_index < gd.grid.rows as i32 {
                     let grid_index = row_index as usize * gd.grid.cols + col_index as usize;
                     let tile = &gd.grid.tiles[grid_index];
                     let rshade = tile.texture;

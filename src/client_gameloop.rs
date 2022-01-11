@@ -17,7 +17,8 @@ fn init_game() -> gamestate::ClientGamestate {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window = video_subsystem.window("AMS2", 640, 480).position_centered().build().unwrap();
+    let window = video_subsystem.window("AMS2", 640, 480).resizable().position_centered().build().unwrap();
+    //yo we could set window title and icon using set_title and set_icon
 
     let canvas = window.into_canvas().build().unwrap();
 
@@ -33,7 +34,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let pid = gdt.2;
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: gdt.0.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(480, 640, gdt.1),
+        grid: Grid::gen_cell_auto(640, 480, gdt.1),
     });
 
     let gdc = gamedata.clone();
