@@ -33,7 +33,6 @@ impl VoidOrifice {
                 let pl = &mut gamedata.players[pid].lock().unwrap();
                 // v-w-y <- wubbles the funny collision check
                 pl.pos = (pl.pos.0 + dir.0, pl.pos.1 + dir.1);
-                println!("new position {:?}", pl.pos);
                 sender.send(PktPayload::Delta(vec!(DeltaEvent{pid: pid, poschange: dir}))).unwrap();
             }
         })
