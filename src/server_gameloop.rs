@@ -88,7 +88,7 @@ pub fn gameloop() {
 
     let gd = Arc::new(Gamedata {
         players: playarrs.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(640, 480, mapseed),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed),
     });
 
 

@@ -17,7 +17,6 @@ macro_rules! eightdir {
     };
 }
 
-
 impl Grid {
     pub fn gen_blank_grid(height: usize, width: usize) -> Self {
 

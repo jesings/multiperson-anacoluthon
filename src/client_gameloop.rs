@@ -34,7 +34,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let pid = gdt.2;
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: gdt.0.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(640, 480, gdt.1),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, gdt.1),
     });
 
     let gdc = gamedata.clone();
