@@ -121,7 +121,7 @@ impl Grid {
                     };
                 }
             }
-            println!("Grid generation failed! Retrying to generate grid!");
+            eprintln!("Grid generation failed! Retrying to generate grid!");
         }
 
     }
