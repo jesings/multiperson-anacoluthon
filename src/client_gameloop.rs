@@ -20,7 +20,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let window = video_subsystem.window("AMS2", 640, 480).resizable().position_centered().build().unwrap();
     //yo we could set window title and icon using set_title and set_icon
 
-    let canvas = window.into_canvas().build().unwrap();
+    let canvas = window.into_canvas().accelerated().build().unwrap();
 
     let event_pump = sdl_context.event_pump().unwrap();
     let ipstr = format!("{}:{}", IPADDR, PORT);
