@@ -2,9 +2,6 @@ use serde::{Serialize, Deserialize};
 use std::sync::*;
 use std::time::Duration;
 
-use super::class::*;
-
-use crate::map::grid::*;
 use crate::gamestate::*;
 use crate::net::pkt::PktPayload;
 
@@ -31,9 +28,11 @@ impl VoidOrifice {
         Some(move |gamedata: Arc<Gamedata>, sender: &mpsc::Sender<PktPayload>| {
             if offcd {
                 let pl = &mut gamedata.players[pid].lock().unwrap();
-                // v-w-y <- wubbles the funny collision check
-                pl.pos = (pl.pos.0 + dir.0, pl.pos.1 + dir.1);
-                sender.send(PktPayload::Delta(vec!(DeltaEvent{pid: pid, poschange: dir}))).unwrap();
+                let pnp = (pl.pos.0 + dir.0, pl.pos.1 + dir.1);
+                if gamedata.grid.passable(pnp) {
+                    pl.pos = pnp;
+                    sender.send(PktPayload::Delta(vec!(DeltaEvent{pid: pid, poschange: dir}))).unwrap();
+                }
             }
         })
     }
