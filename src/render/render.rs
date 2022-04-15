@@ -1,8 +1,6 @@
-use crate::map::grid;
 use crate::gamestate;
 use sdl2::rect::*;
 use sdl2::pixels::Color;
-use rand::prelude::*;
 
 const TILEWIDTH: u32 = 40;
 const ITILEWIDTH: i32 = TILEWIDTH as i32;

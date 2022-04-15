@@ -27,7 +27,11 @@ pub struct Gamedata {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GDTuple(pub Vec<Player>, pub [u8; 32], pub usize); //the i128 is the seed for mapgen, the usize is the pid
+pub struct InitializationData{
+    pub players: Vec<Player>,
+    pub pid: Option<usize>,
+    pub seed: [u8; 32],
+}
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mut

@@ -1,20 +1,21 @@
 use std::sync::{*, mpsc::*};
 use std::collections::VecDeque;
 
-use crate::gamestate::{Gamedata, GDTuple};
+use crate::gamestate::{Gamedata, InitializationData};
 use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
 
 const NET_HZ: u32 = 1000;
 
-pub fn serveloop((mut stream, addr): (std::net::TcpStream, std::net::SocketAddr), gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>, livelisteners: Arc<atomic::AtomicUsize>, index: usize) -> Result<(), String> {
+pub fn serveloop((mut stream, _addr): (std::net::TcpStream, std::net::SocketAddr), _gd: Arc<Gamedata>, sender: mpsc::Sender<PktPayload>, mut br: bus::BusReader<Arc<PktPayload>>, livelisteners: Arc<atomic::AtomicUsize>, index: usize) -> Result<(), String> {
     if let Ok(recvd) = br.recv() {
         let newpkt;
-        if let PktPayload::Gamedata(gdt) = (*recvd).clone() {
-            let mut newgdt = gdt;
-            newgdt.2 = index;
-            newpkt = PktPayload::Gamedata(newgdt);
+        if let PktPayload::Initial(initdata) = (*recvd).clone() {
+            let mut newinitdata = initdata;
+            //we actually populate the pid for this thread's peer
+            newinitdata.pid = Some(index);
+            newpkt = PktPayload::Initial(newinitdata);
         } else {
             panic!("Initialization packet was not a gamedata send?");
         }
@@ -94,9 +95,8 @@ pub fn gameloop() {
 
     let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc, livelisteners.clone());
 
-    spmc.broadcast(Arc::new(PktPayload::Gamedata(GDTuple {0: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), 1: mapseed, 2: 343})));
+    spmc.broadcast(Arc::new(PktPayload::Initial(InitializationData {players: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), seed: mapseed, pid: None})));
 
-    //figure out how to kill gracefully
     let mut broadcasts_needed = VecDeque::new();
     loop {
         while let Ok(recvd) = mpsc_rx.try_recv() {
@@ -127,6 +127,6 @@ pub fn gameloop() {
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / NET_HZ));
     }
     for handle in handles {
-        handle.join().unwrap();
+        handle.join().unwrap().unwrap()
     }
 }

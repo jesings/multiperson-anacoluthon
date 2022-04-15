@@ -2,19 +2,19 @@ use std::net::*;
 use std::sync::*;
 use std::io::{Read, IoSlice, Write, ErrorKind};
 
-use crate::gamestate::GDTuple;
+use crate::gamestate::InitializationData;
 use crate::gamestate::DeltaEvent;
 
 #[derive(Debug, Clone)]
 pub enum PktPayload {
-    Gamedata(GDTuple), //initial, available on request
+    Initial(InitializationData), //initial, available on request
     Delta(Vec<DeltaEvent>), //should return some delta structure
 }
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 enum PktType {
-    FullGamedata, //initial, available on request
+    InitialPkt, //initial, available on request
     Delta,
 }
 
@@ -66,9 +66,9 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
 
     //deserialize payload
     match header.tag {
-        PktType::FullGamedata => {
-            let payload: GDTuple = bincode::deserialize(payloadbuf.as_slice()).unwrap();
-            return Ok(PktPayload::Gamedata(payload));
+        PktType::InitialPkt => {
+            let payload: InitializationData = bincode::deserialize(payloadbuf.as_slice()).unwrap();
+            return Ok(PktPayload::Initial(payload));
         }
         PktType::Delta => {
             let payload: Vec<DeltaEvent> = bincode::deserialize(payloadbuf.as_slice()).unwrap();
@@ -81,13 +81,13 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
     let header;
     let paybuf;
     match *payload {
-        PktPayload::Gamedata(ref gdt) => {
-            paybuf = if let Ok(s) = bincode::serialize(gdt) {
+        PktPayload::Initial(ref init) => {
+            paybuf = if let Ok(s) = bincode::serialize(init) {
                 s
             } else {
                 return Err("Could not serialize gamedata!".to_string());
             };
-            header = PktHeader {tag: PktType::FullGamedata, payload_len: paybuf.len()};
+            header = PktHeader {tag: PktType::InitialPkt, payload_len: paybuf.len()};
         }
         PktPayload::Delta(ref deltavec) => {
             paybuf = if let Ok(s) = bincode::serialize(deltavec) {

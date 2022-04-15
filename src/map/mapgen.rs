@@ -18,7 +18,7 @@ macro_rules! eightdir {
 }
 
 impl Grid {
-    pub fn gen_blank_grid(height: usize, width: usize) -> Self {
+    pub fn _gen_blank_grid(height: usize, width: usize) -> Self {
 
         let dummytile = Arc::new(Tile {
             texture: 0,
