@@ -2,6 +2,7 @@ use crate::gamestate::*;
 use super::keyboard::*;
 use super::actions::Action;
 use crate::net::pkt::PktPayload;
+use crate::entity::entity::Entity;
 
 use std::sync::*;
 use std::time::Duration;
@@ -37,7 +38,6 @@ impl Controller {
         }
     }
     pub fn control(&mut self, pump: &Mutex<EventPump>, gametime: Duration, gamedata: Arc<Gamedata>, pid: usize, sender: &mpsc::Sender<PktPayload>) -> bool {
-        let mut callstack = vec![];
         
         for event in pump.lock().unwrap().poll_iter() {
             match event {
@@ -122,7 +122,7 @@ impl Controller {
         
         match dir {
             Some(dir) => {
-                callstack.push(gamedata.players[pid].lock().unwrap().class.mov(pid, dir, gametime));
+                let pktopt = {gamedata.players[pid].clone().lock().unwrap()}.mov(&gamedata, pid, dir, gametime);
                 
                 let pth = |ks: &mut Keystate| {
                     if let Keystate::Press(_) = *ks {
@@ -135,15 +135,13 @@ impl Controller {
                 pth(&mut self.l);
                 pth(&mut self.r);
                 
+                if let Some(pkt) = pktopt {
+                   sender.send(pkt).unwrap();
+                }
             },
             None => {},
         }
         
-        for callback in callstack {
-            if let Some(cb) = callback {
-                (cb)(gamedata.clone(), sender);
-            }
-        }
         true
     }
 }
