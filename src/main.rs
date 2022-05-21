@@ -7,6 +7,7 @@ mod map;
 mod client_gameloop;
 mod client_netloop;
 mod server_gameloop;
+mod entity;
 mod player;
 mod class;
 mod render;
