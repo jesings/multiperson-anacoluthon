@@ -85,26 +85,34 @@ pub fn gameloop() {
         mapseed[i] = rand::random::<u8>();
     }
 
+
+    let (grid, playerlocs) = Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed, streams.len());
+
     let mut playarrs = vec!();
     for i in 0..streams.len() {
-        playarrs.push(Arc::new(Mutex::new(Player::test_player(i))));
+        playarrs.push(Arc::new(Mutex::new(Player::test_player(i, playerlocs[i]))));
     }
 
     let mut enemy_tick_table: BTreeMap<Duration, Vec<usize>> = BTreeMap::new();
 
     let mut enemyarr = vec!();
     for i in 0..MAPDIM.0 {
-        let randloc = ((rand::random::<usize>() % MAPDIM.0) as isize,
-                       (rand::random::<usize>() % MAPDIM.1) as isize);
+        let mut randloc;
+        loop {
+            randloc = ((rand::random::<usize>() % MAPDIM.0) as isize,
+                           (rand::random::<usize>() % MAPDIM.1) as isize);
+            if grid.tiles[randloc.0 as usize + randloc.1 as usize* MAPDIM.0].passable {
+                break;
+            }
+        }
         enemyarr.push(Arc::new(Mutex::new(Enemy::test_enemy(i, randloc))));
     }
 
     enemy_tick_table.insert(Duration::from_millis(200), (0..MAPDIM.0).collect()); //moderate delay for starting
-
     let gd = Arc::new(Gamedata {
         players: playarrs,
         enemies: enemyarr,
-        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed),
+        grid,
     });
 
 
