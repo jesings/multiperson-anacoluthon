@@ -48,11 +48,11 @@ pub struct Sdlstate {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct PlayerDeltaEvent {
     pub pid: usize,
-    pub poschange: (isize, isize),
+    pub newpos: (isize, isize),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct EnemyDeltaEvent {
     pub eid: usize,
-    pub poschange: (isize, isize),
+    pub newpos: (isize, isize),
 }

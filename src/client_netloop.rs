@@ -19,16 +19,16 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
                         for delta in deltavec {
                             if delta.pid != pid {
                                 let mut deltaplayer = gamedata.players[delta.pid].lock().unwrap();
-                                deltaplayer.pos.0 += delta.poschange.0;
-                                deltaplayer.pos.1 += delta.poschange.1;
+                                deltaplayer.pos.0 = delta.newpos.0;
+                                deltaplayer.pos.1 = delta.newpos.1;
                             }
                         }
                     }
                     PktPayload::EnemyDelta(deltavec) => {
                         for delta in deltavec {
                             let mut deltaenemy = gamedata.enemies[delta.eid].lock().unwrap();
-                            deltaenemy.pos.0 += delta.poschange.0;
-                            deltaenemy.pos.1 += delta.poschange.1;
+                            deltaenemy.pos.0 = delta.newpos.0;
+                            deltaenemy.pos.1 = delta.newpos.1;
                         }
                     }
                 }

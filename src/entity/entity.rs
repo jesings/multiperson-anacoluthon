@@ -38,6 +38,6 @@ pub trait Entity {
        }
        *self.mut_pos() = enp;
        self.on_mov(gamedata, entid, prevpos); //if this modifies the player in such a way that a packet needs to be sent we may need to change this up but for now I don't care
-       return Some(dir);
+       return Some(enp);
    }
 }

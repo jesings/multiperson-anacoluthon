@@ -121,8 +121,8 @@ pub fn gameloop() {
                     for delta in deltalist {
                         let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
                         let dpp = deltaplayer.mut_pos();
-                        dpp.0 += delta.poschange.0;
-                        dpp.1 += delta.poschange.1;
+                        dpp.0 = delta.newpos.0;
+                        dpp.1 = delta.newpos.1;
                         //check that this position is valid, if not revert!?
                     }
                 }
@@ -149,8 +149,8 @@ pub fn gameloop() {
                 } else {
                     later_ticks.insert(newtick, vec![enemyid]);
                 }
-                if let Some(poschange) = confirmedloc {
-                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, poschange});
+                if let Some(newpos) = confirmedloc {
+                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, newpos});
                 }
             }
         }

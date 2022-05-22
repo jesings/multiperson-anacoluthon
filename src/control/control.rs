@@ -136,7 +136,7 @@ impl Controller {
                 pth(&mut self.r);
                 
                 if let Some(pkt) = pktopt {
-                   sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, poschange: pkt}])).unwrap();
+                   sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
                 }
             },
             None => {},
