@@ -101,7 +101,6 @@ impl gamestate::ClientGamestate<'_> {
         //draw enemies
         for wrappedenemy in &gd.enemies {
             let enemy = wrappedenemy.lock().expect("Could not lock enemy to get its position.");
-            canv.set_draw_color(Color::RGB(128, 128, 0));
             let otherpos = enemy.pos();
             let xdelta = (pos.0 - otherpos.0) as i32;
             let ydelta = (pos.1 - otherpos.1) as i32;
