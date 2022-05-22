@@ -36,7 +36,7 @@ impl Grid {
     }
     pub fn gen_cell_auto(height: usize, width: usize, seed: [u8; 32]) -> Self {
         let tileset = (0..=255u8).map(|x| Arc::new(Tile {
-            texture: x,
+            texture: if x != 0 {0} else {1},
             passable: x != 0, //we still allow you to spawn in the wall though
             transparent: true
         })).collect::<Vec<Arc<Tile>>>();

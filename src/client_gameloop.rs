@@ -13,10 +13,10 @@ const FRAMERATE: u32 = 60;
 const IPADDR: &str = "127.0.0.1";
 const PORT: u16 = 9495;
 
-fn init_game() -> gamestate::ClientGamestate {
+pub fn gameloop() -> Result<(), String> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-
+    
     let window = video_subsystem.window("AMS2", 640, 480).resizable().position_centered().build().unwrap();
     //yo we could set window title and icon using set_title and set_icon
 
@@ -45,23 +45,22 @@ fn init_game() -> gamestate::ClientGamestate {
     let handle = thread::spawn(move || {
         client_netloop::netloop(upstream, gdc, pid, rsbc, recver)
     });
-    gamestate::ClientGamestate {
+    let texture_creator = canvas.texture_creator();
+    let gs = gamestate::ClientGamestate {
         handle,
         runningstate: runningstatebool,
         sdl: gamestate::Sdlstate {
             ctx: sdl_context,
             vid: video_subsystem,
             pump: Mutex::new(event_pump),
+            texture_table: crate::render::texture_table::TextureTable::init(&texture_creator),
             canv: Mutex::new(canvas),
         },
         pid,
         gamedata,
         sender
-    }
-}
-
-pub fn gameloop() -> Result<(), String> {
-    let gs = init_game();
+    };
+    
     let mut controller = Controller::new();
     let start = Instant::now();
     let mut i = 0;
