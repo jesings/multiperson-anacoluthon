@@ -3,19 +3,21 @@ use std::sync::*;
 use std::io::{Read, IoSlice, Write, ErrorKind};
 
 use crate::gamestate::InitializationData;
-use crate::gamestate::DeltaEvent;
+use crate::gamestate::{PlayerDeltaEvent, EnemyDeltaEvent};
 
 #[derive(Debug, Clone)]
 pub enum PktPayload {
     Initial(InitializationData), //initial, available on request
-    Delta(Vec<DeltaEvent>), //should return some delta structure
+    PlayerDelta(Vec<PlayerDeltaEvent>), //should return some delta structure
+    EnemyDelta(Vec<EnemyDeltaEvent>), //should return some delta structure
 }
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 enum PktType {
     InitialPkt, //initial, available on request
-    Delta,
+    PlayerDelta,
+    EnemyDelta,
 }
 
 //this is all that is necessary
@@ -70,9 +72,13 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
             let payload: InitializationData = bincode::deserialize(payloadbuf.as_slice()).unwrap();
             return Ok(PktPayload::Initial(payload));
         }
-        PktType::Delta => {
-            let payload: Vec<DeltaEvent> = bincode::deserialize(payloadbuf.as_slice()).unwrap();
-            return Ok(PktPayload::Delta(payload));
+        PktType::PlayerDelta => {
+            let payload: Vec<PlayerDeltaEvent> = bincode::deserialize(payloadbuf.as_slice()).unwrap();
+            return Ok(PktPayload::PlayerDelta(payload));
+        }
+        PktType::EnemyDelta => {
+            let payload: Vec<EnemyDeltaEvent> = bincode::deserialize(payloadbuf.as_slice()).unwrap();
+            return Ok(PktPayload::EnemyDelta(payload));
         }
     }
 }
@@ -89,13 +95,21 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
             };
             header = PktHeader {tag: PktType::InitialPkt, payload_len: paybuf.len()};
         }
-        PktPayload::Delta(ref deltavec) => {
+        PktPayload::PlayerDelta(ref deltavec) => {
             paybuf = if let Ok(s) = bincode::serialize(deltavec) {
                 s
             } else {
                 return Err("Could not serialize deltas!".to_string());
             };
-            header = PktHeader {tag: PktType::Delta, payload_len: paybuf.len()};
+            header = PktHeader {tag: PktType::PlayerDelta, payload_len: paybuf.len()};
+        }
+        PktPayload::EnemyDelta(ref deltavec) => {
+            paybuf = if let Ok(s) = bincode::serialize(deltavec) {
+                s
+            } else {
+                return Err("Could not serialize deltas!".to_string());
+            };
+            header = PktHeader {tag: PktType::EnemyDelta, payload_len: paybuf.len()};
         }
     }
     let io_header = IoSlice::new(unsafe { 

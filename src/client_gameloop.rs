@@ -34,6 +34,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let pid = initdata.pid.unwrap();
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: initdata.players.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        enemies: initdata.enemies.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed),
     });
 

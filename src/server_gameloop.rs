@@ -1,11 +1,13 @@
 use std::sync::{*, mpsc::*};
-use std::collections::VecDeque;
+use std::collections::{VecDeque, BTreeMap};
+use std::time::{Duration, Instant};
 
-use crate::gamestate::{Gamedata, InitializationData};
+use crate::gamestate::{Gamedata, InitializationData, EnemyDeltaEvent};
 use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
-use crate::entity::entity::Entity;
+use crate::entity::entity::{Entity, Etype};
+use crate::enemy::enemy::Enemy;
 
 const NET_HZ: u32 = 1000;
 
@@ -85,33 +87,77 @@ pub fn gameloop() {
 
     let mut playarrs = vec!();
     for i in 0..streams.len() {
-        playarrs.push(Player::test_player(i));
+        playarrs.push(Arc::new(Mutex::new(Player::test_player(i))));
     }
 
+    let mut enemy_tick_table: BTreeMap<Duration, Vec<usize>> = BTreeMap::new();
+
+    let mut enemyarr = vec!();
+    for i in 0..MAPDIM.0 {
+        let randloc = ((rand::random::<usize>() % MAPDIM.0) as isize,
+                       (rand::random::<usize>() % MAPDIM.1) as isize);
+        enemyarr.push(Arc::new(Mutex::new(Enemy::test_enemy(i, randloc))));
+    }
+
+    enemy_tick_table.insert(Duration::from_millis(200), (0..MAPDIM.0).collect()); //moderate delay for starting
+
     let gd = Arc::new(Gamedata {
-        players: playarrs.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        players: playarrs,
+        enemies: enemyarr,
         grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed),
     });
 
 
     let handles = servnet::launch_server_workers(streams, gd.clone(), mpsc_tx, &mut spmc, livelisteners.clone());
 
-    spmc.broadcast(Arc::new(PktPayload::Initial(InitializationData {players: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), seed: mapseed, pid: None})));
+    spmc.broadcast(Arc::new(PktPayload::Initial(InitializationData {players: gd.players.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), enemies: gd.enemies.iter().map(|x| (*x.lock().unwrap()).clone()).collect(), seed: mapseed, pid: None})));
 
     let mut broadcasts_needed = VecDeque::new();
+    let loop_start = Instant::now();
     loop {
         while let Ok(recvd) = mpsc_rx.try_recv() {
-            if let PktPayload::Delta(ref deltalist) = recvd {
-                for delta in deltalist {
-                    let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
-                    let dpp = deltaplayer.mut_pos();
-                    dpp.0 += delta.poschange.0;
-                    dpp.1 += delta.poschange.1;
-                    //check that this position is valid, if not revert!?
+            match recvd {
+                PktPayload::PlayerDelta(ref deltalist) => {
+                    for delta in deltalist {
+                        let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
+                        let dpp = deltaplayer.mut_pos();
+                        dpp.0 += delta.poschange.0;
+                        dpp.1 += delta.poschange.1;
+                        //check that this position is valid, if not revert!?
+                    }
                 }
+                PktPayload::EnemyDelta(_) => {
+                    unreachable!(); // the server should never recieve enemy deltas
+                }
+                _ => {}
             }
             broadcasts_needed.push_back(recvd);
         }
+
+        let now = Instant::now().duration_since(loop_start);
+
+        let mut enemydeltas = vec!();
+        let mut later_ticks = enemy_tick_table.split_off(&now);
+        for (_tick, enemies) in enemy_tick_table {
+            for enemyid in enemies {
+                let mut enemy = gd.enemies[enemyid].lock().unwrap();
+                let moveloc = enemy.enemy_type.move_pattern();
+                let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc, now);
+                let newtick = *enemy.mut_mov_next();
+                if let Some(ref mut vec) = later_ticks.get_mut(&newtick) {
+                    vec.push(enemyid);
+                } else {
+                    later_ticks.insert(newtick, vec![enemyid]);
+                }
+                if let Some(poschange) = confirmedloc {
+                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, poschange});
+                }
+            }
+        }
+        if !enemydeltas.is_empty() {
+            broadcasts_needed.push_back(PktPayload::EnemyDelta(enemydeltas));
+        }
+        enemy_tick_table = later_ticks;
 
         while broadcasts_needed.len() > 0 {
             let frontel = broadcasts_needed.pop_front().unwrap();
