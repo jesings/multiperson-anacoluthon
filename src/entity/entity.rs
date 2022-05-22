@@ -24,13 +24,13 @@ pub trait Entity {
        if !offcd {
            return None;
        }
-       let rectified_dir = if let Some(newdir) = self.rectify_dir(gamedata, entid, dir) {
-           newdir
+       let prevpos = *self.mut_pos();
+       let enp;
+       if let Some(newdir) = self.rectify_dir(gamedata, entid, dir) {
+           enp = (prevpos.0 + newdir.0, prevpos.1 + newdir.1);
        } else {
            return None;
        };
-       let prevpos = *self.mut_pos();
-       let enp = (prevpos.0 + rectified_dir.0, prevpos.1 + rectified_dir.1);
 
        *self.mut_mov_next() = now + self.move_timeout();
        if !gamedata.grid.passable(enp) {
