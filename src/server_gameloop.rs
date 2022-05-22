@@ -5,6 +5,7 @@ use crate::gamestate::{Gamedata, InitializationData};
 use crate::net::{pkt::PktPayload, *};
 use crate::player::player::*;
 use crate::map::grid::*;
+use crate::entity::entity::Entity;
 
 const NET_HZ: u32 = 1000;
 
@@ -103,8 +104,9 @@ pub fn gameloop() {
             if let PktPayload::Delta(ref deltalist) = recvd {
                 for delta in deltalist {
                     let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
-                    deltaplayer.pos.0 += delta.poschange.0;
-                    deltaplayer.pos.1 += delta.poschange.1;
+                    let dpp = deltaplayer.mut_pos();
+                    dpp.0 += delta.poschange.0;
+                    dpp.1 += delta.poschange.1;
                     //check that this position is valid, if not revert!?
                 }
             }

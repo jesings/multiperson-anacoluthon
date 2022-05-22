@@ -63,14 +63,14 @@ pub fn gameloop() -> Result<(), String> {
     let mut controller = Controller::new();
     let start = Instant::now();
     let mut i = 0;
-    'running: loop {
+    loop {
         let now = Instant::now();
         let gametime = now.duration_since(start);
         i = (i + 1) % 255;
         
         if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid, &gs.sender) {
             gs.runningstate.store(false, atomic::Ordering::Relaxed);
-            break 'running;
+            break;
         }
         
         // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());

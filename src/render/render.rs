@@ -1,4 +1,6 @@
 use crate::gamestate;
+use crate::entity::entity::Entity;
+
 use sdl2::pixels::Color;
 use sdl2::rect::*;
 
@@ -15,7 +17,7 @@ impl gamestate::ClientGamestate<'_> {
 
         let gd = &self.gamedata;
 
-        let pos = gd.players[pid].lock().expect("Could not lock player to get its position.").pos.clone();
+        let pos = gd.players[pid].lock().expect("Could not lock player to get its position.").pos().clone();
 
         let mut canv = self.sdl.canv.lock().expect("Could not lock canvas for rendering!");
         canv.set_draw_color(Color::RGB(0, 0, 0));
@@ -81,7 +83,8 @@ impl gamestate::ClientGamestate<'_> {
                 rightrect = curplayer_rect.clone();
             } else {
                 //for the other players, find their tile offset from the current player and render them from that
-                let otherpos = player.pos;
+
+                let otherpos = player.pos();
                 let xdelta = (pos.0 - otherpos.0) as i32;
                 let ydelta = (pos.1 - otherpos.1) as i32;
                 rightrect = Rect::new(

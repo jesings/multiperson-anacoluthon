@@ -1,10 +1,6 @@
 use serde::{Serialize, Deserialize};
-use std::sync::*;
-use std::time::Duration;
-
-use crate::gamestate::*;
-use crate::net::pkt::PktPayload;
 use super::void_orifice::*;
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Class {
@@ -12,9 +8,9 @@ pub enum Class {
 }
 
 impl Class {
-    pub fn mov(&mut self, pid: usize, dir: (isize, isize), now: Duration) -> Option<impl Fn(Arc<Gamedata>, &mpsc::Sender<PktPayload>) -> ()> {
+    pub fn move_timeout(&self) -> Duration {
         match self {
-            Class::VoidOrifice(void_orifice) => void_orifice.mov(pid, dir, now),
+            Class::VoidOrifice(void_orifice) => void_orifice.move_timeout,
         }
     }
     
