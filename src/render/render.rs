@@ -56,7 +56,6 @@ impl gamestate::ClientGamestate<'_> {
                     let grid_index = row_index as usize * gd.grid.cols + col_index as usize;
                     let tile = &gd.grid.tiles[grid_index];
 
-                    //canv.set_draw_color(Color::RGB(rshade, rshade, rshade));
                     textures.draw_tile(&mut canv, rendrect, tile.texture);
                 } else {
                     canv.set_draw_color(Color::RGB(0, 0, 0));

@@ -4,7 +4,7 @@ pub const MAPDIM: (usize, usize) = (640, 480);
 
 #[derive(Debug)]
 pub struct Tile {
-    pub texture: i32, //Not sure texture should be a u8, we can make it an SDL object later
+    pub texture: i32,
     pub passable: bool,
     pub transparent: bool,
 }

@@ -1,5 +1,5 @@
 use sdl2::image::LoadTexture;
-use sdl2::render::{Canvas, Texture, TextureCreator, BlendMode};
+use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::rect::Rect;
 
 use std::path::Path;
@@ -14,10 +14,8 @@ pub struct TextureTable<'a> {
 
 impl<'a> TextureTable<'a> {
     pub fn init(texture_creator: &'a TextureCreator<sdl2::video::WindowContext>) -> Self {
-        let mut tiles_texture = texture_creator.load_texture(Path::new("textures/tiles_placeholder.png")).unwrap();
-        tiles_texture.set_blend_mode(BlendMode::Blend);
-        let mut player_texture = texture_creator.load_texture(Path::new("textures/player_placeholder.png")).unwrap();
-        player_texture.set_blend_mode(BlendMode::Blend);
+        let tiles_texture = texture_creator.load_texture(Path::new("textures/tiles_placeholder.png")).unwrap();
+        let player_texture = texture_creator.load_texture(Path::new("textures/player_placeholder.png")).unwrap();
         let portrait_texture = texture_creator.load_texture(Path::new("textures/portrait_placeholder.png")).unwrap();
         TextureTable {
             tiles_texture,

@@ -81,7 +81,7 @@ pub fn gameloop() -> Result<(), String> {
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMERATE));
     }
 
-    (move || {gs.handle.join().unwrap().unwrap();})();
+    gs.handle.join().unwrap().unwrap();
 
     return Ok(());
 }
