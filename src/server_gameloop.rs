@@ -1,5 +1,5 @@
 use std::sync::{*, mpsc::*};
-use std::collections::{VecDeque, BTreeMap};
+use std::collections::{VecDeque, BTreeMap, HashMap};
 use std::time::{Duration, Instant};
 
 use crate::gamestate::{Gamedata, InitializationData, EnemyDeltaEvent};
@@ -86,33 +86,41 @@ pub fn gameloop() {
     }
 
 
-    let (grid, playerlocs) = Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed, streams.len());
-
-    let mut playarrs = vec!();
-    for i in 0..streams.len() {
-        playarrs.push(Arc::new(Mutex::new(Player::test_player(i, playerlocs[i]))));
+    let (grid, mut playerlocs) = Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, mapseed, streams.len());
+    
+    let mut occupied = HashMap::new();
+    for (i, loc) in playerlocs.iter().enumerate() {
+        occupied.insert(*loc, (Etype::Player, i));
     }
 
     let mut enemy_tick_table: BTreeMap<Duration, Vec<usize>> = BTreeMap::new();
 
-    let mut enemyarr = vec!();
+    let mut enemylocs = vec!();
     for i in 0..MAPDIM.0 {
         let mut randloc;
         loop {
             randloc = ((rand::random::<usize>() % MAPDIM.0) as isize,
                            (rand::random::<usize>() % MAPDIM.1) as isize);
             if grid.tiles[randloc.0 as usize + randloc.1 as usize* MAPDIM.0].passable {
-                break;
+                if !occupied.contains_key(&randloc) {
+                    break;
+                }
             }
         }
-        enemyarr.push(Arc::new(Mutex::new(Enemy::test_enemy(i, randloc))));
+        occupied.insert(randloc, (Etype::Enemy, i));
+        enemylocs.push(randloc);
     }
+
+    let playarrs = playerlocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(Player::test_player(i, x)))).collect();
+
+    let enemyarr = enemylocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(Enemy::test_enemy(i, x)))).collect();
 
     enemy_tick_table.insert(Duration::from_millis(200), (0..MAPDIM.0).collect()); //moderate delay for starting
     let gd = Arc::new(Gamedata {
         players: playarrs,
         enemies: enemyarr,
         grid,
+        occupation: Arc::new(RwLock::new(occupied)),
     });
 
 
@@ -129,6 +137,9 @@ pub fn gameloop() {
                     for delta in deltalist {
                         let mut deltaplayer = gd.players[delta.pid].lock().unwrap();
                         let dpp = deltaplayer.mut_pos();
+                        let mut occupied = gd.occupation.write().unwrap();
+                        occupied.remove(&dpp);
+                        occupied.insert(delta.newpos, (Etype::Player, delta.pid));
                         dpp.0 = delta.newpos.0;
                         dpp.1 = delta.newpos.1;
                         //check that this position is valid, if not revert!?

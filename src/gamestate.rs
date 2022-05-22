@@ -2,10 +2,12 @@ use serde::{Serialize, Deserialize};
 use sdl2::*;
 use std::sync::{*, mpsc};
 use std::thread::JoinHandle;
+use std::collections::HashMap;
 
 use super::map::grid::Grid;
 use super::player::player::Player;
 use super::enemy::enemy::Enemy;
+use super::entity::entity::{Etype};
 use super::net::pkt::PktPayload;
 use super::render::texture_table::TextureTable;
 
@@ -27,6 +29,7 @@ pub struct Gamedata {
     pub players: Vec<Arc<Mutex<Player>>>,
     pub enemies: Vec<Arc<Mutex<Enemy>>>,
     pub grid: Grid,
+    pub occupation: Arc<RwLock<HashMap<(isize, isize), (Etype, usize)>>>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
