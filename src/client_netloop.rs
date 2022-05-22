@@ -4,6 +4,7 @@ use std::sync::*;
 use crate::gamestate::{Gamedata};
 use crate::net::pkt;
 use crate::net::pkt::PktPayload;
+use crate::entity::entity::{Entity,Etype};
 
 const CLIENT_NET_HZ: u32 = 1000;
 
@@ -19,6 +20,9 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
                         for delta in deltavec {
                             if delta.pid != pid {
                                 let mut deltaplayer = gamedata.players[delta.pid].lock().unwrap();
+                                let mut occupied = gamedata.occupation.write().unwrap();
+                                occupied.remove(deltaplayer.pos());
+                                occupied.insert(delta.newpos, (Etype::Player, delta.pid));
                                 deltaplayer.pos.0 = delta.newpos.0;
                                 deltaplayer.pos.1 = delta.newpos.1;
                             }
@@ -27,6 +31,9 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
                     PktPayload::EnemyDelta(deltavec) => {
                         for delta in deltavec {
                             let mut deltaenemy = gamedata.enemies[delta.eid].lock().unwrap();
+                            let mut occupied = gamedata.occupation.write().unwrap();
+                            occupied.remove(deltaenemy.pos());
+                            occupied.insert(delta.newpos, (Etype::Enemy, delta.eid));
                             deltaenemy.pos.0 = delta.newpos.0;
                             deltaenemy.pos.1 = delta.newpos.1;
                         }
