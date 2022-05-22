@@ -7,6 +7,7 @@ use crate::control::control::*;
 use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
+use std::boxed::Box;
 
 const FRAMERATE: u32 = 60;
 
@@ -44,6 +45,7 @@ fn init_game() -> gamestate::ClientGamestate {
     let handle = thread::spawn(move || {
         client_netloop::netloop(upstream, gdc, pid, rsbc, recver)
     });
+    let texture_creator = Arc::new(canvas.texture_creator());
     gamestate::ClientGamestate {
         handle,
         runningstate: runningstatebool,
@@ -51,6 +53,8 @@ fn init_game() -> gamestate::ClientGamestate {
             ctx: sdl_context,
             vid: video_subsystem,
             pump: Mutex::new(event_pump),
+            texture_table: crate::render::texture_table::TextureTable::init(texture_creator),
+            texture_creator: texture_creator,
             canv: Mutex::new(canvas),
         },
         pid,

@@ -6,6 +6,7 @@ use std::thread::JoinHandle;
 use super::map::grid::Grid;
 use super::player::player::Player;
 use super::net::pkt::PktPayload;
+use super::render::texture_table::TextureTable;
 
 
 //GameState will always be wrapped in an arc, so its immutable members can be accessed without a lock or arc at all?
@@ -40,6 +41,8 @@ pub struct Sdlstate {
     pub vid: VideoSubsystem,
     pub pump: Mutex<EventPump>,
     pub canv: Mutex<render::Canvas<video::Window>>,
+    pub texture_table: TextureTable<'static>,
+    texture_creator: Arc<render::TextureCreator<sdl2::video::WindowContext>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
