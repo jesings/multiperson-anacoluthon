@@ -9,10 +9,7 @@ const SIDEWIDTH: u32 = 80;
 pub const TILEWIDTH: u32 = 16;
 pub const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
-const PLAYERWIDTH: u32 = TILEWIDTH / 2;
-const IPLAYERWIDTH: i32 = ITILEWIDTH / 2;
-
-impl gamestate::ClientGamestate {
+impl gamestate::ClientGamestate<'_> {
     pub fn render(&self) {
         let pid = self.pid;
 
@@ -23,6 +20,7 @@ impl gamestate::ClientGamestate {
         let mut canv = self.sdl.canv.lock().expect("Could not lock canvas for rendering!");
         canv.set_draw_color(Color::RGB(0, 0, 0));
         canv.clear();
+        let textures = &self.sdl.texture_table;
 
         //get dimensions of the canvas
         let canvsize: (u32, u32) = canv.output_size().expect("Could not get canvas size.");
@@ -55,15 +53,15 @@ impl gamestate::ClientGamestate {
                 if col_index >= 0 && row_index >= 0 && col_index < gd.grid.cols as i32 && row_index < gd.grid.rows as i32 {
                     let grid_index = row_index as usize * gd.grid.cols + col_index as usize;
                     let tile = &gd.grid.tiles[grid_index];
-                    let rshade = tile.texture as u8;
 
-                    canv.set_draw_color(Color::RGB(rshade, rshade, rshade));
+                    //canv.set_draw_color(Color::RGB(rshade, rshade, rshade));
+                    textures.draw_tile(&mut canv, rendrect, tile.texture);
                 } else {
                     canv.set_draw_color(Color::RGB(0, 0, 0));
-                }
+                    if let Err(_) = canv.fill_rect(rendrect) {
+                        eprintln!("Could not render tile at ({}, {}) from grid", col_index, row_index);
+                    }
 
-                if let Err(_) = canv.fill_rect(rendrect) {
-                    eprintln!("Could not render tile at ({}, {}) from grid", col_index, row_index);
                 }
 
                 rendrect.offset(0, ITILEWIDTH * upscale as i32);
@@ -71,8 +69,7 @@ impl gamestate::ClientGamestate {
             rendrect.offset(ITILEWIDTH * upscale as i32, 0);
         }
 
-        let p_margin = IPLAYERWIDTH * upscale as i32 / 2;
-        let curplayer_rect = Rect::new(player_tile_start_x + p_margin, player_tile_start_y + p_margin, PLAYERWIDTH * upscale, PLAYERWIDTH * upscale);
+        let curplayer_rect = Rect::new(player_tile_start_x, player_tile_start_y, TILEWIDTH * upscale, TILEWIDTH * upscale);
 
         //now draw the players
         for wrappedplayer in &gd.players {
@@ -81,25 +78,21 @@ impl gamestate::ClientGamestate {
 
             if player.pid == pid {
                 //for the current player, just draw it in the center of the screen
-                canv.set_draw_color(Color::RGB(0, 255, 0));
                 rightrect = curplayer_rect.clone();
             } else {
                 //for the other players, find their tile offset from the current player and render them from that
-                canv.set_draw_color(Color::RGB(255, 0, 0));
                 let otherpos = player.pos;
                 let xdelta = (pos.0 - otherpos.0) as i32;
                 let ydelta = (pos.1 - otherpos.1) as i32;
                 rightrect = Rect::new(
-                    player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32 + p_margin,
-                    player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32 + p_margin,
-                    PLAYERWIDTH,
-                    PLAYERWIDTH,
+                    player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32,
+                    player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32,
+                    TILEWIDTH,
+                    TILEWIDTH,
                 );
             }
 
-            if let Err(_) = canv.fill_rect(rightrect) {
-                eprintln!("Could not render player {}", player.pid);
-            }
+            textures.draw_player(&mut canv, rightrect, player.pid as i32);
         }
 
         //draw ui
@@ -107,6 +100,7 @@ impl gamestate::ClientGamestate {
         if let Err(_) = canv.fill_rect(Rect::new(left_x, top_y, SIDEWIDTH * upscale, WINDOWHEIGHT * upscale)) {
             eprintln!("UI draw failure");
         };
+        textures.draw_portrait(&mut canv, Rect::new(left_x + 10 * upscale as i32, top_y + 2 * upscale as i32, 60* upscale, 60 * upscale));
         
         canv.present();
     }

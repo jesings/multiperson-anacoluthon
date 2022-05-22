@@ -11,10 +11,10 @@ use super::render::texture_table::TextureTable;
 
 //GameState will always be wrapped in an arc, so its immutable members can be accessed without a lock or arc at all?
 //Other, mutable members can either be wrapped in a struct or not
-pub struct ClientGamestate {
+pub struct ClientGamestate<'a> {
     pub handle: JoinHandle<Result<(), String>>,
     pub runningstate: Arc<atomic::AtomicBool>,
-    pub sdl: Sdlstate,
+    pub sdl: Sdlstate<'a>,
     pub pid: usize,
     pub gamedata: Arc<Gamedata>,
     pub sender: mpsc::Sender<PktPayload>,
@@ -36,13 +36,12 @@ pub struct InitializationData{
 
 //gamedata struct, shared between client and server?
 //nothing needs it as mut
-pub struct Sdlstate {
+pub struct Sdlstate<'a> {
     pub ctx: Sdl,
     pub vid: VideoSubsystem,
     pub pump: Mutex<EventPump>,
     pub canv: Mutex<render::Canvas<video::Window>>,
-    pub texture_table: TextureTable<'static>,
-    texture_creator: Arc<render::TextureCreator<sdl2::video::WindowContext>>,
+    pub texture_table: TextureTable<'a, 'a>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

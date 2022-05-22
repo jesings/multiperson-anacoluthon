@@ -7,14 +7,13 @@ use crate::control::control::*;
 use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
-use std::boxed::Box;
 
 const FRAMERATE: u32 = 60;
 
 const IPADDR: &str = "127.0.0.1";
 const PORT: u16 = 9495;
 
-fn init_game() -> gamestate::ClientGamestate {
+pub fn gameloop() -> Result<(), String> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -45,26 +44,22 @@ fn init_game() -> gamestate::ClientGamestate {
     let handle = thread::spawn(move || {
         client_netloop::netloop(upstream, gdc, pid, rsbc, recver)
     });
-    let texture_creator = Arc::new(canvas.texture_creator());
-    gamestate::ClientGamestate {
+    let texture_creator = canvas.texture_creator();
+    let gs = gamestate::ClientGamestate {
         handle,
         runningstate: runningstatebool,
         sdl: gamestate::Sdlstate {
             ctx: sdl_context,
             vid: video_subsystem,
             pump: Mutex::new(event_pump),
-            texture_table: crate::render::texture_table::TextureTable::init(texture_creator),
-            texture_creator: texture_creator,
+            texture_table: crate::render::texture_table::TextureTable::init(&texture_creator),
             canv: Mutex::new(canvas),
         },
         pid,
         gamedata,
         sender
-    }
-}
-
-pub fn gameloop() -> Result<(), String> {
-    let gs = init_game();
+    };
+    
     let mut controller = Controller::new();
     let start = Instant::now();
     let mut i = 0;
@@ -86,7 +81,7 @@ pub fn gameloop() -> Result<(), String> {
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMERATE));
     }
 
-    gs.handle.join().unwrap().unwrap();
+    (move || {gs.handle.join().unwrap().unwrap();})();
 
     return Ok(());
 }
