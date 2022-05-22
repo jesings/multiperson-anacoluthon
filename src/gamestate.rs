@@ -5,6 +5,7 @@ use std::thread::JoinHandle;
 
 use super::map::grid::Grid;
 use super::player::player::Player;
+use super::enemy::enemy::Enemy;
 use super::net::pkt::PktPayload;
 
 
@@ -23,12 +24,14 @@ pub struct ClientGamestate {
 #[derive(Debug)]
 pub struct Gamedata {
     pub players: Vec<Arc<Mutex<Player>>>,
+    pub enemies: Vec<Arc<Mutex<Enemy>>>,
     pub grid: Grid,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InitializationData{
     pub players: Vec<Player>,
+    pub enemies: Vec<Enemy>,
     pub pid: Option<usize>,
     pub seed: [u8; 32],
 }
@@ -43,7 +46,13 @@ pub struct Sdlstate {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub struct DeltaEvent {
+pub struct PlayerDeltaEvent {
     pub pid: usize,
-    pub poschange: (isize, isize),
+    pub newpos: (isize, isize),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub struct EnemyDeltaEvent {
+    pub eid: usize,
+    pub newpos: (isize, isize),
 }
