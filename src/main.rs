@@ -10,6 +10,7 @@ mod server_gameloop;
 mod entity;
 mod player;
 mod class;
+mod enemy;
 mod render;
 mod control;
 

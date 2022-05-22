@@ -28,9 +28,13 @@ impl<'a> TextureTable<'a> {
         if let Err(_) = c.copy(&self.player_texture, Rect::new(index % 4 * ITILEWIDTH, 0, TILEWIDTH, TILEWIDTH), dst) {
             eprintln!("Could not render tile");
         }
-            
     }
 
+    pub fn draw_enemy(&self, c: &mut Canvas<sdl2::video::Window>, dst: Rect) {
+        if let Err(_) = c.copy(&self.player_texture, Rect::new(0, ITILEWIDTH, TILEWIDTH, TILEWIDTH), dst) {
+            eprintln!("Could not render tile");
+        }
+    }
     pub fn draw_portrait(&self, c: &mut Canvas<sdl2::video::Window>, dst: Rect) {
         if let Err(_) = c.copy(&self.portrait_texture, None, dst) {
             eprintln!("Could not render tile");

@@ -2,7 +2,7 @@ use crate::gamestate::*;
 use super::keyboard::*;
 use super::actions::Action;
 use crate::net::pkt::PktPayload;
-use crate::entity::entity::Entity;
+use crate::entity::entity::{Entity, Etype};
 
 use std::sync::*;
 use std::time::Duration;
@@ -122,7 +122,7 @@ impl Controller {
         
         match dir {
             Some(dir) => {
-                let pktopt = {gamedata.players[pid].clone().lock().unwrap()}.mov(&gamedata, pid, dir, gametime);
+                let pktopt = {gamedata.players[pid].clone().lock().unwrap()}.mov(&gamedata, (Etype::Player, pid), dir, gametime);
                 
                 let pth = |ks: &mut Keystate| {
                     if let Keystate::Press(_) = *ks {
@@ -136,7 +136,7 @@ impl Controller {
                 pth(&mut self.r);
                 
                 if let Some(pkt) = pktopt {
-                   sender.send(pkt).unwrap();
+                   sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
                 }
             },
             None => {},

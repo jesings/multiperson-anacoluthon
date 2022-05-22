@@ -11,6 +11,8 @@ const SIDEWIDTH: u32 = 80;
 pub const TILEWIDTH: u32 = 16;
 pub const ITILEWIDTH: i32 = TILEWIDTH as i32;
 
+const MAXDELTA: i32 = (WINDOWHEIGHT / TILEWIDTH / 2) as i32;
+
 impl gamestate::ClientGamestate<'_> {
     pub fn render(&self) {
         let pid = self.pid;
@@ -75,28 +77,44 @@ impl gamestate::ClientGamestate<'_> {
         //now draw the players
         for wrappedplayer in &gd.players {
             let player = wrappedplayer.lock().expect("Could not lock player to get its position.");
-            let rightrect;
 
             if player.pid == pid {
                 //for the current player, just draw it in the center of the screen
-                rightrect = curplayer_rect.clone();
+                textures.draw_player(&mut canv, curplayer_rect, player.pid as i32);
             } else {
                 //for the other players, find their tile offset from the current player and render them from that
-
                 let otherpos = player.pos();
                 let xdelta = (pos.0 - otherpos.0) as i32;
                 let ydelta = (pos.1 - otherpos.1) as i32;
-                rightrect = Rect::new(
-                    player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32,
-                    player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32,
-                    TILEWIDTH,
-                    TILEWIDTH,
-                );
-            }
-
-            textures.draw_player(&mut canv, rightrect, player.pid as i32);
+                if xdelta.abs() <= MAXDELTA && ydelta.abs() <= MAXDELTA {
+                    let rightrect = Rect::new(
+                        player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32,
+                        player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32,
+                        TILEWIDTH * upscale,
+                        TILEWIDTH * upscale,
+                    );
+                    textures.draw_player(&mut canv, rightrect, player.pid as i32);
+                }
+            }   
         }
 
+        //draw enemies
+        for wrappedenemy in &gd.enemies {
+            let enemy = wrappedenemy.lock().expect("Could not lock enemy to get its position.");
+            canv.set_draw_color(Color::RGB(128, 128, 0));
+            let otherpos = enemy.pos();
+            let xdelta = (pos.0 - otherpos.0) as i32;
+            let ydelta = (pos.1 - otherpos.1) as i32;
+            if xdelta.abs() <= MAXDELTA && ydelta.abs() <= MAXDELTA {
+                textures.draw_enemy(&mut canv, Rect::new(
+                    player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32,
+                    player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32,
+                    TILEWIDTH * upscale,
+                    TILEWIDTH * upscale,
+                ));
+            }
+        }
+        
         //draw ui
         canv.set_draw_color(Color::RGB(66, 66, 66));
         if let Err(_) = canv.fill_rect(Rect::new(left_x, top_y, SIDEWIDTH * upscale, WINDOWHEIGHT * upscale)) {
