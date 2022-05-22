@@ -16,7 +16,7 @@ const PORT: u16 = 9495;
 pub fn gameloop() -> Result<(), String> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-
+    
     let window = video_subsystem.window("AMS2", 640, 480).resizable().position_centered().build().unwrap();
     //yo we could set window title and icon using set_title and set_icon
 

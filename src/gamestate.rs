@@ -41,7 +41,7 @@ pub struct Sdlstate<'a> {
     pub vid: VideoSubsystem,
     pub pump: Mutex<EventPump>,
     pub canv: Mutex<render::Canvas<video::Window>>,
-    pub texture_table: TextureTable<'a, 'a>,
+    pub texture_table: TextureTable<'a>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]

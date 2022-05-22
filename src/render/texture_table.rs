@@ -6,22 +6,20 @@ use std::path::Path;
 
 use super::render::{TILEWIDTH, ITILEWIDTH};
 
-pub struct TextureTable<'a, 'b:'a> {
-    texture_creator: &'b TextureCreator<sdl2::video::WindowContext>,
+pub struct TextureTable<'a> {
     tiles_texture: Texture<'a>,
     player_texture: Texture<'a>,
     portrait_texture: Texture<'a>,
 }
 
-impl<'a, 'b> TextureTable<'a, 'b> {
-    pub fn init(texture_creator: &'b TextureCreator<sdl2::video::WindowContext>) -> Self {
-        let mut tiles_texture = texture_creator.load_texture(Path::new("textures/tiles_placeholder.bmp")).unwrap();
+impl<'a> TextureTable<'a> {
+    pub fn init(texture_creator: &'a TextureCreator<sdl2::video::WindowContext>) -> Self {
+        let mut tiles_texture = texture_creator.load_texture(Path::new("textures/tiles_placeholder.png")).unwrap();
         tiles_texture.set_blend_mode(BlendMode::Blend);
-        let mut player_texture = texture_creator.load_texture(Path::new("textures/player_placeholder.ppm")).unwrap();
+        let mut player_texture = texture_creator.load_texture(Path::new("textures/player_placeholder.png")).unwrap();
         player_texture.set_blend_mode(BlendMode::Blend);
-        let portrait_texture = texture_creator.load_texture(Path::new("textures/portrait_placeholder.bmp")).unwrap();
+        let portrait_texture = texture_creator.load_texture(Path::new("textures/portrait_placeholder.png")).unwrap();
         TextureTable {
-            texture_creator,
             tiles_texture,
             player_texture,
             portrait_texture,
