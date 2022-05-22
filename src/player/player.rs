@@ -13,10 +13,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn test_player(pid: usize) -> Self {
+    pub fn test_player(pid: usize, pos: (isize, isize)) -> Self {
         Player {
-            pid: pid,
-            pos: (64, 64),
+            pid, pos,
             class: Class::void_orifice(),
             mov_next: Duration::from_millis(0),
         }

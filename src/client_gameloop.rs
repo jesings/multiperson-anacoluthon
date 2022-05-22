@@ -32,10 +32,11 @@ pub fn gameloop() -> Result<(), String> {
     };
     upstream.set_nonblocking(true).unwrap();
     let pid = initdata.pid.unwrap();
+    let numplayers = initdata.players.len();
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: initdata.players.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         enemies: initdata.enemies.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed, numplayers).0,
     });
 
     let gdc = gamedata.clone();
