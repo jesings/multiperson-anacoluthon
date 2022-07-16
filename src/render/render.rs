@@ -109,8 +109,10 @@ impl gamestate::ClientGamestate<'_> {
                     player_tile_start_x - xdelta * ITILEWIDTH * upscale as i32,
                     player_tile_start_y - ydelta * ITILEWIDTH * upscale as i32,
                     TILEWIDTH * upscale,
-                    TILEWIDTH * upscale,
-                ));
+                    TILEWIDTH * upscale
+                ),
+                enemy.enemy_type.drawindex()
+                );
             }
         }
         

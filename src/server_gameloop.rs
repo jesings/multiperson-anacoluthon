@@ -113,7 +113,9 @@ pub fn gameloop() {
 
     let playarrs = playerlocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(Player::test_player(i, x)))).collect();
 
-    let enemyarr = enemylocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(Enemy::test_enemy(i, x)))).collect();
+    let enemyarr = enemylocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(
+                if rand::random::<bool>() {Enemy::test_enemy(i, x)} else {Enemy::fast_enemy(i, x)}
+                ))).collect();
 
     enemy_tick_table.insert(Duration::from_millis(200), (0..MAPDIM.0).collect()); //moderate delay for starting
     let gd = Arc::new(Gamedata {
@@ -161,15 +163,23 @@ pub fn gameloop() {
             for enemyid in enemies {
                 let mut enemy = gd.enemies[enemyid].lock().unwrap();
                 let moveloc = enemy.enemy_type.move_pattern();
-                let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc, now);
+                assert!(!(*enemy.mut_mov_next() > now));
+
+                let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
+                if let Some(newpos) = confirmedloc {
+                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, newpos});
+                } else {
+                    enemy.enemy_type.crash();
+                }
+
+                enemy.mov_timeout(now);
+
                 let newtick = *enemy.mut_mov_next();
+
                 if let Some(ref mut vec) = later_ticks.get_mut(&newtick) {
                     vec.push(enemyid);
                 } else {
                     later_ticks.insert(newtick, vec![enemyid]);
-                }
-                if let Some(newpos) = confirmedloc {
-                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, newpos});
                 }
             }
         }

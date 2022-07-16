@@ -17,22 +17,16 @@ pub trait Entity {
    fn rectify_dir(&self, _gamedata: &Arc<Gamedata>, _entid: (Etype, usize), dir: (isize, isize)) -> Option<(isize, isize)> {
        Some(dir)
    }
-   fn on_mov(&mut self, _gamedata: &Arc<Gamedata>, _entid: (Etype, usize), _prevpos: (isize, isize)) {
-   }
-   fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize), now: Duration) -> Option<(isize, isize)> {
-       let offcd = *self.mut_mov_next() < now;
-       if !offcd {
-           return None;
-       }
+   fn on_mov(&mut self, _gamedata: &Arc<Gamedata>, _entid: (Etype, usize), _prevpos: (isize, isize)) {}
+   fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize)) -> Option<(isize, isize)> {
        let prevpos = *self.mut_pos();
        let enp;
        if let Some(newdir) = self.rectify_dir(gamedata, entid, dir) {
            enp = (prevpos.0 + newdir.0, prevpos.1 + newdir.1);
        } else {
-           return None;
-       };
+           unreachable!();
+       }
 
-       *self.mut_mov_next() = now + self.move_timeout();
        if !gamedata.grid.passable(enp) {
            return None;
        }
@@ -46,5 +40,9 @@ pub trait Entity {
        *self.mut_pos() = enp;
        self.on_mov(gamedata, entid, prevpos); //if this modifies the player in such a way that a packet needs to be sent we may need to change this up but for now I don't care
        return Some(enp);
+   }
+
+   fn mov_timeout(&mut self, now: Duration) {
+       *self.mut_mov_next() = now + self.move_timeout();
    }
 }
