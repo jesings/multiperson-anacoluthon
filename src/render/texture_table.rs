@@ -8,6 +8,7 @@ pub struct TextureTable<'a> {
     tiles_texture: Texture<'a>,
     player_texture: Texture<'a>,
     portrait_texture: Texture<'a>,
+    animation_texture: Texture<'a>,
 }
 
 impl<'a> TextureTable<'a> {
@@ -21,10 +22,12 @@ impl<'a> TextureTable<'a> {
         let tiles_texture = texture_creator.load_texture(texture_path.join("tiles_placeholder.png")).unwrap();
         let player_texture = texture_creator.load_texture(texture_path.join("player_placeholder.png")).unwrap();
         let portrait_texture = texture_creator.load_texture(texture_path.join("portrait_placeholder.png")).unwrap();
+        let animation_texture = texture_creator.load_texture(texture_path.join("swing.png")).unwrap();
         TextureTable {
             tiles_texture,
             player_texture,
             portrait_texture,
+            animation_texture,
         }
     }
 
@@ -47,6 +50,12 @@ impl<'a> TextureTable<'a> {
 
     pub fn draw_tile(&self, c: &mut Canvas<sdl2::video::Window>, dst: Rect, index: i32) {
         if let Err(_) = c.copy(&self.tiles_texture, Rect::new(ITILEWIDTH * index, 0, TILEWIDTH, TILEWIDTH), dst) {
+            eprintln!("Could not render tile");
+        }
+    }
+
+    pub fn draw_animation(&self, c: &mut Canvas<sdl2::video::Window>, dst: Rect, index: i32, dims: (u32, u32)) {
+        if let Err(_) = c.copy(&self.tiles_texture, Rect::new(0, ITILEWIDTH * index, TILEWIDTH * dims.0, TILEWIDTH * dims.1), dst) {
             eprintln!("Could not render tile");
         }
     }

@@ -41,4 +41,9 @@ impl EnemyType {
     pub fn sequitur() -> Self {
         EnemyType::Sequitur(Sequitur::new())
     }
+    pub fn render_dims(&self) -> (u32, u32) {
+        match self {
+            _ => (1, 1)
+        }
+    }
 }
