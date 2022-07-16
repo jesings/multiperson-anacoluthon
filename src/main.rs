@@ -11,6 +11,7 @@ mod entity;
 mod player;
 mod class;
 mod enemy;
+mod bozo_ent;
 mod render;
 mod control;
 
