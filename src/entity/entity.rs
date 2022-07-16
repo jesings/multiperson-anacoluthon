@@ -6,7 +6,8 @@ use crate::gamestate::*;
 #[derive(Clone, Copy)]
 pub enum Etype {
     Player,
-    Enemy
+    Enemy,
+    BozoEnt
 }
  
 pub trait Entity {
