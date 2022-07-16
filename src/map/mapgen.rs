@@ -17,6 +17,8 @@ macro_rules! eightdir {
     };
 }
 
+const MINPLAYERDIST: usize = 100;
+
 impl Grid {
     pub fn _gen_blank_grid(height: usize, width: usize) -> Self {
 
@@ -34,7 +36,7 @@ impl Grid {
             tiles: gridtiles
         }
     }
-    pub fn gen_cell_auto(height: usize, width: usize, seed: [u8; 32]) -> Self {
+    pub fn gen_cell_auto(height: usize, width: usize, seed: [u8; 32], numplayers: usize) -> (Self, Vec<(isize, isize)>) {
         let tileset = (0..=255u8).map(|x| Arc::new(Tile {
             texture: if x != 0 {0} else {1},
             passable: x != 0, //we still allow you to spawn in the wall though
@@ -78,8 +80,9 @@ impl Grid {
             }
 
             for _ in 0..16 {
-                let xd = ayn.next_u64() as usize % width;
-                let yd = ayn.next_u64() as usize % height;
+                let mut startinglocs: Vec<(isize, isize)> = vec!();
+                let xd = ayn.next_u32() as usize % width;
+                let yd = ayn.next_u32() as usize % height;
                 let index = yd * width + xd;
                 if startvec[index] < liveness_threshold {
                     continue;
@@ -112,13 +115,53 @@ impl Grid {
                     floodfill(tuple.0, tuple.1, &mut fillstack);
                 }
                 if filled_count > width * height * 2 / 5 {
-                    let gridtiles = scratchvec.drain(..).map(|i| tileset[i as usize].clone()).collect();
+                    let gridtiles: Vec<Arc<Tile>> = scratchvec.drain(..).map(|x| tileset[x as usize].clone()).collect();
+                    for (index, tile) in gridtiles.iter().enumerate() {
+                        if tile.passable {
+                            if 0xf & ayn.next_u32() == 0 { //only take a fraction (1/16) of the possible locations
+                                //we want players to spawn in a nook (not necessarily in the end,
+                                //this is just an example for player spawning rules)
+                                let mut numwallneighbors = 0;
+                                if (index % width == 0) || gridtiles[index as usize + 1].passable == false {numwallneighbors+=1;}
+                                if (index % width == width - 1) || gridtiles[index as usize - 1].passable == false {numwallneighbors+=1;}
+                                if (index / width == 0) || gridtiles[index as usize - width].passable == false {numwallneighbors+=1;}
+                                if (index / width == height - 1) || gridtiles[index as usize + width].passable == false {numwallneighbors+=1;}
 
-                    return Self {
+                                let thisx = (index % width) as isize;
+                                let thisy = (index / width) as isize;
+
+                                if numwallneighbors == 3 {
+                                    //now check other possible tiles and make sure they aren't too close
+                                    let mut proxflag = true;
+                                    for otherone in startinglocs.iter() {
+                                        if otherone.0.abs_diff(thisx) + otherone.1.abs_diff(thisy) < MINPLAYERDIST {
+                                            proxflag = false;
+                                        }
+                                    }
+                                    if proxflag {
+                                        startinglocs.push((thisx, thisy));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if startinglocs.len() < numplayers {continue;}
+
+
+                    //shuffle them lists
+                    for i in 0..numplayers {
+                        let shufindex = ayn.next_u64() as usize % (numplayers - i);
+                        startinglocs.swap(i, shufindex + i);
+                    }
+
+
+                    startinglocs.truncate(numplayers);
+
+                    return (Self {
                         cols: width,
                         rows: height,
                         tiles: gridtiles
-                    };
+                    }, startinglocs);
                 }
             }
             eprintln!("Grid generation failed! Retrying to generate grid!");

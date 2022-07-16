@@ -1,6 +1,6 @@
 use std::sync::*;
 
-pub const MAPDIM: (usize, usize) = (640, 480);
+pub const MAPDIM: (usize, usize) = (200, 200);
 
 #[derive(Debug)]
 pub struct Tile {

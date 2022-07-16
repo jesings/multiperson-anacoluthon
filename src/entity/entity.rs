@@ -3,7 +3,7 @@ use std::sync::*;
 
 use crate::gamestate::*;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Etype {
     Player,
     Enemy,
@@ -37,6 +37,13 @@ pub trait Entity {
        if !gamedata.grid.passable(enp) {
            return None;
        }
+       let mut occupied = gamedata.occupation.write().unwrap();
+       if occupied.contains_key(&enp) {
+           return None;
+       }
+       occupied.remove(&prevpos);
+       occupied.insert(enp, entid);
+       drop(occupied);
        *self.mut_pos() = enp;
        self.on_mov(gamedata, entid, prevpos); //if this modifies the player in such a way that a packet needs to be sent we may need to change this up but for now I don't care
        return Some(enp);

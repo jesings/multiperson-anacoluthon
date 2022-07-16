@@ -3,10 +3,12 @@ use crate::client_netloop;
 use crate::net::*;
 use crate::map::grid::*;
 use crate::control::control::*;
+use crate::entity::entity::{Entity, Etype};
 
 use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
+use std::collections::HashMap;
 
 const FRAMERATE: u32 = 60;
 
@@ -32,10 +34,19 @@ pub fn gameloop() -> Result<(), String> {
     };
     upstream.set_nonblocking(true).unwrap();
     let pid = initdata.pid.unwrap();
+    let numplayers = initdata.players.len();
+    let mut occupied = HashMap::new();
+    for player in initdata.players.iter() {
+        occupied.insert(*player.pos(), (Etype::Player, player.pid));
+    }
+    for enemy in initdata.enemies.iter() {
+        occupied.insert(*enemy.pos(), (Etype::Enemy, enemy.eid));
+    }
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: initdata.players.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         enemies: initdata.enemies.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
-        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed),
+        grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed, numplayers).0,
+        occupation: Arc::new(RwLock::new(occupied))
     });
 
     let gdc = gamedata.clone();
