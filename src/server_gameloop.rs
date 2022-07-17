@@ -163,7 +163,6 @@ pub fn gameloop() {
             for enemyid in enemies {
                 let mut enemy = gd.enemies[enemyid].lock().unwrap();
                 let moveloc = enemy.enemy_type.move_pattern();
-                assert!(!(*enemy.mut_mov_next() > now));
 
                 let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
                 if let Some(newpos) = confirmedloc {
