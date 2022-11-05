@@ -122,7 +122,15 @@ impl Controller {
         
         match dir {
             Some(dir) => {
-                let pktopt = {gamedata.players[pid].clone().lock().unwrap()}.mov(&gamedata, (Etype::Player, pid), dir, gametime);
+                let gdp = gamedata.players[pid].clone();
+                let mut gdp_ppp = gdp.lock().unwrap();
+                if *gdp_ppp.mut_mov_next() > gametime {
+                    return true;
+                }
+                let pktopt = gdp_ppp.mov(&gamedata, (Etype::Player, pid), dir);
+                gdp_ppp.mov_timeout(gametime);
+                drop(gdp_ppp);
+                drop(gdp);
                 
                 let pth = |ks: &mut Keystate| {
                     if let Keystate::Press(_) = *ks {

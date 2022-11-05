@@ -19,6 +19,13 @@ impl Enemy {
             enemy_type: EnemyType::sequitur()
         }
     }
+    pub fn fast_enemy(eid: usize, pos: (isize, isize)) -> Self {
+        Self {
+            eid, pos, 
+            mov_next: Duration::from_millis(0),
+            enemy_type: EnemyType::polandball()
+        }
+    }
 }
 
 impl Entity for Enemy {
