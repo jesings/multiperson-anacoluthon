@@ -1,3 +1,7 @@
+use std::time::Duration;
+
+use crate::entity::entity::Entity;
+
 #[derive(Debug)]
 pub struct BozoEnt {
     pub bid: usize,
@@ -7,13 +11,30 @@ pub struct BozoEnt {
 }
 
 #[derive(Debug)]
+pub struct Sword {
+    damage: isize,
+}
+
+#[derive(Debug)]
 pub enum BozoKind {
     Sword(Sword),
 }
 
 impl BozoKind {
-    
+    pub fn tick(&mut self) -> Option<(isize, isize)> {
+        match self {
+            BozoKind::Sword(_) => None
+            _ => Some((0, 0))
+        }
+    }
+    pub fn on_collide(&mut self, gamedata: &Arc<Gamedata>) {
+        
+    }
+    pub fn timeout(&self) -> Duration {
+        Duration::new(0,0)
+    }
 }
+
 
 
 impl Entity for BozoEnt {
@@ -24,10 +45,10 @@ impl Entity for BozoEnt {
         &mut self.pos
     }
     fn move_timeout(&self) -> Duration {
-        self.enemy_type.move_timeout()
+        self.bozo_kind.timeout()
     }
     fn mut_mov_next(&mut self) -> &mut Duration {
-        &mut self.mov_next
+        &mut self.tick_next
     }
 
 }

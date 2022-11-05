@@ -35,17 +35,31 @@ pub trait Entity {
         let mut occupied = gamedata.occupation.write().unwrap();
         if let Some(entlist) = occupied.get_mut(&enp) {
             for ent in entlist.iter() {
-                let passable = match entid {
+                let passable = match ent {
                     (Player, pid) =>
-                        self.passable(&*gamedata.players[pid].lock().unwrap()),
+                        self.passable(&*gamedata.players[*pid].lock().unwrap()),
                     (Enemy, eid) =>
-                        self.passable(&*gamedata.enemies[eid].lock().unwrap()),
+                        self.passable(&*gamedata.enemies[*eid].lock().unwrap()),
                     (BozoEnt, bid) =>
-                        self.passable(&*gamedata.bozoents.get(&bid).unwrap().lock().unwrap()),
+                        self.passable(&*gamedata.bozoents.get(bid).unwrap().lock().unwrap()),
                 };
                 if !passable {
                     return None;
                 }
+            }
+            let revert_mov = false;
+            for ent in entlist.iter() {
+                revert_mov = match ent {
+                    (Player, pid) =>
+                        gamedata.players[*pid].lock().unwrap().collide(gamedata, entid);
+                    (Enemy, eid) =>
+                        gamedata.enemies[*eid].lock().unwrap().collide(gamedata, entid),
+                    (BozoEnt, bid) =>
+                        gamedata.bozoents.get(bid).unwrap().lock().unwrap().collide(gamedata, entid),
+                } | self.collide(gamedata, *ent) | revert_mov;
+            }
+            if revert_mov {
+                return None;
             }
             entlist.push(entid);
         } else {
@@ -69,5 +83,8 @@ pub trait Entity {
     }
     fn mov_timeout(&mut self, now: Duration) {
         *self.mut_mov_next() = now + self.move_timeout();
+    }
+    fn collide(&mut self, gamedata: &Arc<Gamedata>, other: (Etype, usize)) -> bool {
+        false
     }
 }
