@@ -22,7 +22,7 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
                                 let mut deltaplayer = gamedata.players[delta.pid].lock().unwrap();
                                 let mut occupied = gamedata.occupation.write().unwrap();
                                 occupied.remove(deltaplayer.pos());
-                                occupied.insert(delta.newpos, (Etype::Player, delta.pid));
+                                occupied.insert(delta.newpos, vec![(Etype::Player, delta.pid)]);
                                 deltaplayer.pos.0 = delta.newpos.0;
                                 deltaplayer.pos.1 = delta.newpos.1;
                             }
@@ -33,7 +33,7 @@ pub fn netloop(mut stream: TcpStream, gamedata: Arc<Gamedata>, pid: usize, rsbc:
                             let mut deltaenemy = gamedata.enemies[delta.eid].lock().unwrap();
                             let mut occupied = gamedata.occupation.write().unwrap();
                             occupied.remove(deltaenemy.pos());
-                            occupied.insert(delta.newpos, (Etype::Enemy, delta.eid));
+                            occupied.insert(delta.newpos, vec![(Etype::Enemy, delta.eid)]);
                             deltaenemy.pos.0 = delta.newpos.0;
                             deltaenemy.pos.1 = delta.newpos.1;
                         }

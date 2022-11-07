@@ -36,25 +36,25 @@ pub trait Entity {
         if let Some(entlist) = occupied.get_mut(&enp) {
             for ent in entlist.iter() {
                 let passable = match ent {
-                    (Player, pid) =>
+                    (Etype::Player, pid) =>
                         self.passable(&*gamedata.players[*pid].lock().unwrap()),
-                    (Enemy, eid) =>
+                    (Etype::Enemy, eid) =>
                         self.passable(&*gamedata.enemies[*eid].lock().unwrap()),
-                    (BozoEnt, bid) =>
+                    (Etype::BozoEnt, bid) =>
                         self.passable(&*gamedata.bozoents.get(bid).unwrap().lock().unwrap()),
                 };
                 if !passable {
                     return None;
                 }
             }
-            let revert_mov = false;
+            let mut revert_mov = false;
             for ent in entlist.iter() {
                 revert_mov = match ent {
-                    (Player, pid) =>
-                        gamedata.players[*pid].lock().unwrap().collide(gamedata, entid);
-                    (Enemy, eid) =>
+                    (Etype::Player, pid) =>
+                        gamedata.players[*pid].lock().unwrap().collide(gamedata, entid),
+                    (Etype::Enemy, eid) =>
                         gamedata.enemies[*eid].lock().unwrap().collide(gamedata, entid),
-                    (BozoEnt, bid) =>
+                    (Etype::BozoEnt, bid) =>
                         gamedata.bozoents.get(bid).unwrap().lock().unwrap().collide(gamedata, entid),
                 } | self.collide(gamedata, *ent) | revert_mov;
             }
@@ -66,11 +66,13 @@ pub trait Entity {
             occupied.insert(enp, vec![entid]);
         };
         
-        if let Some(preventlist) = occupied.get_mut(&prevpos) && preventlist.len() > 1 {
-            let previndex = preventlist.iter().position(|&x| x == entid).unwrap();
-            preventlist.remove(previndex);
-        } else {
-            occupied.remove(&prevpos);
+        if let Some(preventlist) = occupied.get_mut(&prevpos) {
+            if preventlist.len() > 1 {
+                let previndex = preventlist.iter().position(|&x| x == entid).unwrap();
+                preventlist.remove(previndex);
+            } else {
+                occupied.remove(&prevpos);
+            };
         };
         
         drop(occupied);
@@ -78,13 +80,13 @@ pub trait Entity {
         self.on_mov(gamedata, entid, prevpos); //if this modifies the player in such a way that a packet needs to be sent we may need to change this up but for now I don't care
         return Some(enp);
     }
-    fn passable<T: Entity>(&self, other: &T) -> bool {
+    fn passable<T: Entity>(&self, _other: &T) -> bool {
         false
     }
     fn mov_timeout(&mut self, now: Duration) {
         *self.mut_mov_next() = now + self.move_timeout();
     }
-    fn collide(&mut self, gamedata: &Arc<Gamedata>, other: (Etype, usize)) -> bool {
+    fn collide(&mut self, _gamedata: &Arc<Gamedata>, _other: (Etype, usize)) -> bool {
         false
     }
 }

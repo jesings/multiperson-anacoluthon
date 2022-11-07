@@ -8,7 +8,7 @@ use crate::entity::entity::{Entity, Etype};
 use std::sync::*;
 use std::time::{Duration, Instant};
 use std::thread;
-use std::collections::HashMap;
+use std::collections::{BTreeMap,HashMap};
 
 const FRAMERATE: u32 = 60;
 
@@ -37,14 +37,15 @@ pub fn gameloop() -> Result<(), String> {
     let numplayers = initdata.players.len();
     let mut occupied = HashMap::new();
     for player in initdata.players.iter() {
-        occupied.insert(*player.pos(), (Etype::Player, player.pid));
+        occupied.insert(*player.pos(), vec![(Etype::Player, player.pid)]);
     }
     for enemy in initdata.enemies.iter() {
-        occupied.insert(*enemy.pos(), (Etype::Enemy, enemy.eid));
+        occupied.insert(*enemy.pos(), vec![(Etype::Enemy, enemy.eid)]);
     }
     let gamedata =  Arc::new(gamestate::Gamedata {
         players: initdata.players.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         enemies: initdata.enemies.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
+        bozoents: BTreeMap::new(),
         grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed, numplayers).0,
         occupation: Arc::new(RwLock::new(occupied))
     });

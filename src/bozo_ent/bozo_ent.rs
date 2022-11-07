@@ -1,6 +1,8 @@
 use std::time::Duration;
+use std::sync::Arc;
 
-use crate::entity::entity::Entity;
+use crate::entity::entity::{Etype,Entity};
+use crate::gamestate::Gamedata;
 
 #[derive(Debug)]
 pub struct BozoEnt {
@@ -23,8 +25,8 @@ pub enum BozoKind {
 impl BozoKind {
     pub fn tick(&mut self) -> Option<(isize, isize)> {
         match self {
-            BozoKind::Sword(_) => None
-            _ => Some((0, 0))
+            BozoKind::Sword(_) => None,
+            _ => Some((0, 0)),
         }
     }
     pub fn on_collide(&mut self, gamedata: &Arc<Gamedata>) {
@@ -49,6 +51,14 @@ impl Entity for BozoEnt {
     }
     fn mut_mov_next(&mut self) -> &mut Duration {
         &mut self.tick_next
+    }
+
+    fn collide(&mut self, _gamedata: &Arc<Gamedata>, _other: (Etype, usize)) -> bool {
+        println!("colided");
+        false
+    }
+    fn passable<T: Entity>(&self, _other: &T) -> bool {
+        true
     }
 
 }
