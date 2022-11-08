@@ -21,7 +21,7 @@ pub trait Entity {
     fn on_mov(&mut self, _gamedata: &Arc<Gamedata>, _entid: (Etype, usize), _prevpos: (isize, isize)) {
     }
     
-    fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize)) -> Option<(isize, isize)> {
+    fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize)) -> BTreeMap<PktType, PktPayload> {
         let prevpos = *self.mut_pos();
         let enp;
         if let Some(newdir) = self.rectify_dir(gamedata, entid, dir) {

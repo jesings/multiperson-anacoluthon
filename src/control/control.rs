@@ -25,6 +25,7 @@ pub struct Controller {
     r: Keystate,
     d: Keystate,
     l: Keystate,
+    s: Option(usize),
 }
 
 impl Controller {
@@ -35,6 +36,7 @@ impl Controller {
             d: Keystate::None,
             l: Keystate::None,
             r: Keystate::None,
+            s: None,
         }
     }
     pub fn control(&mut self, pump: &Mutex<EventPump>, gametime: Duration, gamedata: Arc<Gamedata>, pid: usize, sender: &mpsc::Sender<PktPayload>) -> bool {
@@ -58,6 +60,9 @@ impl Controller {
                         Action::Right => {
                             self.r = Keystate::Press(gametime);
                         },
+                        Action::Skill(s) => {
+                            self.s = Some(s);
+                        },
                         _ => {}
                     }
                 },
@@ -74,6 +79,9 @@ impl Controller {
                         },
                         Action::Right => {
                             self.r = if self.r == Keystate::Hold {Keystate::None} else {Keystate::Tap};
+                        },
+                        Action::Skill(s) => {
+                            if self.s == Some(s) { self.s = None; }
                         },
                         _ => {}
                     }
@@ -119,19 +127,32 @@ impl Controller {
         ttn(&mut self.l);
         ttn(&mut self.r);
         
-        
         match dir {
             Some(dir) => {
                 let gdp = gamedata.players[pid].clone();
                 let mut gdp_ppp = gdp.lock().unwrap();
-                if *gdp_ppp.mut_mov_next() > gametime {
-                    return true;
+
+                let pktopt = match self.s {
+                    None => {
+                        if *gdp_ppp.mut_mov_next() > gametime {
+                            return true;
+                        }
+                        let pktopt = gdp_ppp.mov(&gamedata, (Etype::Player, pid), dir);
+                        gdp_ppp.mov_timeout(gametime);
+                        pktopt
+                    },
+                    Some(s) => {
+                        if *gdp_ppp.mut_skill_next(s) > gametime {
+                            return true;
+                        }
+                        let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, dir);
+                        gdp_ppp.skill_timeout(gametime);
+                        pktopt
+                    }
                 }
-                let pktopt = gdp_ppp.mov(&gamedata, (Etype::Player, pid), dir);
-                gdp_ppp.mov_timeout(gametime);
                 drop(gdp_ppp);
                 drop(gdp);
-                
+
                 let pth = |ks: &mut Keystate| {
                     if let Keystate::Press(_) = *ks {
                         *ks = Keystate::Hold;
@@ -147,7 +168,25 @@ impl Controller {
                    sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
                 }
             },
-            None => {},
+            None => {
+                if let Some(s) = this.s {
+                    let gdp = gamedata.players[pid].clone();
+                    let mut gdp_ppp = gdp.lock().unwrap();
+
+                    if gdp_ppp.directional_skill(s) || *gdp_ppp.mut_skill_next(s) > gametime {
+                        return true;
+                    }
+                    let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, None);
+                    gdp_ppp.skill_timeout(gametime);
+                    
+                    drop(gdp_ppp);
+                    drop(gdp);
+
+                    if let Some(pkt) = pktopt {
+                        sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
+                    }
+                }
+            },
         }
         
         true

@@ -21,7 +21,8 @@ impl Keyboard {
                 (Keycode::Left, Action::Left),
                 (Keycode::Down, Action::Down),
                 (Keycode::Right, Action::Right),
-                
+
+                (Keycode::Kp0, Action::Skill(0)), //imagine being tenkeyless
             ]),
         }
     }

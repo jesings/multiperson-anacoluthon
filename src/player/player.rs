@@ -20,6 +20,18 @@ impl Player {
             mov_next: Duration::from_millis(0),
         }
     }
+
+    fn directional_skill(&self, skill) -> bool {
+        self.class.directional_skill(skill)
+    }
+    
+    fn mut_skill_next(&mut self, skill: usize) -> &mut Duration {
+        self.class.skill_next(skill)
+    }
+
+    fn skill_timeout(&mut self, skill: usize, now: Duration) { // probably move to entity eventually
+        self.mut_skill_next(skill) = now + self.skill_timeout(skill);
+    }
 }
 
 impl Entity for Player {
