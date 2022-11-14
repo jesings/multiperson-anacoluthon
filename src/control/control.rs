@@ -25,7 +25,7 @@ pub struct Controller {
     r: Keystate,
     d: Keystate,
     l: Keystate,
-    s: Option(usize),
+    s: Option<usize>,
 }
 
 impl Controller {
@@ -145,11 +145,11 @@ impl Controller {
                         if *gdp_ppp.mut_skill_next(s) > gametime {
                             return true;
                         }
-                        let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, dir);
-                        gdp_ppp.skill_timeout(gametime);
+                        let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, Some(dir));
+                        gdp_ppp.skill_timeout(s, gametime);
                         pktopt
-                    }
-                }
+                    },
+                };
                 drop(gdp_ppp);
                 drop(gdp);
 
@@ -169,15 +169,15 @@ impl Controller {
                 }
             },
             None => {
-                if let Some(s) = this.s {
+                if let Some(s) = self.s {
                     let gdp = gamedata.players[pid].clone();
                     let mut gdp_ppp = gdp.lock().unwrap();
 
                     if gdp_ppp.directional_skill(s) || *gdp_ppp.mut_skill_next(s) > gametime {
                         return true;
                     }
-                    let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, None);
-                    gdp_ppp.skill_timeout(gametime);
+                    let pktopt = (*gdp_ppp).skill(&gamedata, (Etype::Player, pid), s, None);
+                    gdp_ppp.skill_timeout(s, gametime);
                     
                     drop(gdp_ppp);
                     drop(gdp);
