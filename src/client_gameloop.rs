@@ -47,7 +47,8 @@ pub fn gameloop() -> Result<(), String> {
         enemies: initdata.enemies.drain(..).map(|x| Arc::new(Mutex::new(x))).collect(),
         bozoents: BTreeMap::new(),
         grid: Grid::gen_cell_auto(MAPDIM.0, MAPDIM.1, initdata.seed, numplayers).0,
-        occupation: Arc::new(RwLock::new(occupied))
+        occupation: Arc::new(RwLock::new(occupied)),
+        pktbuf: Arc::new(Mutex::new(BTreeMap::new())),
     });
 
     let gdc = gamedata.clone();
@@ -81,7 +82,7 @@ pub fn gameloop() -> Result<(), String> {
         let gametime = now.duration_since(start);
         i = (i + 1) % 255;
         
-        if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid, &gs.sender) {
+        if !controller.control(&gs.sdl.pump, gametime, gs.gamedata.clone(), gs.pid) {
             gs.runningstate.store(false, atomic::Ordering::Relaxed);
             break;
         }

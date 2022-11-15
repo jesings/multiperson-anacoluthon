@@ -123,6 +123,7 @@ pub fn gameloop() {
         bozoents: BTreeMap::new(),
         grid,
         occupation: Arc::new(RwLock::new(occupied)),
+        pktbuf: Arc::new(Mutex::new(BTreeMap::new())),
     });
 
 
@@ -164,12 +165,10 @@ pub fn gameloop() {
                 let mut enemy = gd.enemies[enemyid].lock().unwrap();
                 let moveloc = enemy.enemy_type.move_pattern();
 
-                let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
-                if let Some(newpos) = confirmedloc {
-                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, newpos});
-                } else {
-                    enemy.enemy_type.crash();
-                }
+                enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
+
+                // enemy.enemy_type.crash(); // todo where do poland ball crash
+                
 
                 enemy.mov_timeout(now);
 
@@ -187,7 +186,7 @@ pub fn gameloop() {
         }
         enemy_tick_table = later_ticks;
 
-        while broadcasts_needed.len() > 0 {
+        while broadcasts_needed.len() > 0 { // todo make this the btreemap
             let frontel = broadcasts_needed.pop_front().unwrap();
             let tryfront = Arc::new(frontel);
             if let Err(_) = spmc.try_broadcast(tryfront.clone()) {
