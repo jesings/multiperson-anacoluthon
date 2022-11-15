@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::net::*;
 use std::sync::*;
 use std::io::{Read, IoSlice, Write, ErrorKind};
@@ -13,7 +14,7 @@ pub enum PktPayload {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PktType {
     InitialPkt, //initial, available on request
     PlayerDelta,
@@ -27,6 +28,29 @@ pub enum PktType {
 struct PktHeader {
     pub tag: PktType,
     pub payload_len: usize
+}
+
+pub fn coalesce_pkts(into: &mut BTreeMap<PktType, PktPayload>, from: &mut BTreeMap<PktType, PktPayload>) {
+    for (k,fv) in from.iter_mut() {
+        subsume_pkt(&mut into, *k, fv);
+    }
+    drop(from);
+}
+
+pub fn subsume_pkt(into: &mut BTreeMap<PktType, PktPayload>, k: PktType, fv: &mut PktPayload) {
+    if let Some(mut iv) = into.get_mut(&k) {
+        match (iv,fv) {
+            (PktPayload::Initial(_), PktPayload::Initial(init)) =>
+                *iv = *fv,
+            (PktPayload::PlayerDelta(ilst), PktPayload::PlayerDelta(flst)) =>
+                ilst.append(&mut flst),
+            (PktPayload::EnemyDelta(ilst), PktPayload::EnemyDelta(flst)) => 
+                ilst.append(&mut flst),
+            _ => unreachable!(),
+        };
+    } else {
+        into.insert(k,*fv);
+    }
 }
 
 pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
