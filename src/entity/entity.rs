@@ -23,7 +23,7 @@ pub trait Entity {
     fn on_mov(&mut self, _gamedata: &Arc<Gamedata>, _entid: (Etype, usize), _prevpos: (isize, isize)) {
     }
     
-    fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize)) -> Option<BTreeMap<PktType, PktPayload>> {
+    fn mov(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), dir: (isize, isize)) {
         let prevpos = *self.mut_pos();
         let enp;
         if let Some(newdir) = self.rectify_dir(gamedata, entid, dir) {
@@ -32,7 +32,7 @@ pub trait Entity {
             unreachable!();
         }
         if !gamedata.grid.passable(enp) {
-            return None;
+            return;
         }
         let mut occupied = gamedata.occupation.write().unwrap();
         if let Some(entlist) = occupied.get_mut(&enp) {
@@ -46,7 +46,7 @@ pub trait Entity {
                         self.passable(&*gamedata.bozoents.get(bid).unwrap().lock().unwrap()),
                 };
                 if !passable {
-                    return None;
+                    return;
                 }
             }
             let mut revert_mov = false;
@@ -61,7 +61,7 @@ pub trait Entity {
                 } | self.collide(gamedata, *ent) | revert_mov;
             }
             if revert_mov {
-                return None;
+                return;
             }
             entlist.push(entid);
         } else {
@@ -80,7 +80,6 @@ pub trait Entity {
         drop(occupied);
         *self.mut_pos() = enp;
         self.on_mov(gamedata, entid, prevpos); //if this modifies the player in such a way that a packet needs to be sent we may need to change this up but for now I don't care
-        return Some(enp);
     }
     fn passable<T: Entity>(&self, _other: &T) -> bool {
         false

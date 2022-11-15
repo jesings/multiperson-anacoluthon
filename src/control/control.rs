@@ -39,7 +39,7 @@ impl Controller {
             s: None,
         }
     }
-    pub fn control(&mut self, pump: &Mutex<EventPump>, gametime: Duration, gamedata: Arc<Gamedata>, pid: usize, sender: &mpsc::Sender<PktPayload>) -> bool {
+    pub fn control(&mut self, pump: &Mutex<EventPump>, gametime: Duration, gamedata: Arc<Gamedata>, pid: usize) -> bool {
         
         for event in pump.lock().unwrap().poll_iter() {
             match event {
@@ -132,22 +132,20 @@ impl Controller {
                 let gdp = gamedata.players[pid].clone();
                 let mut gdp_ppp = gdp.lock().unwrap();
 
-                let pktopt = match self.s {
+                match self.s {
                     None => {
                         if *gdp_ppp.mut_mov_next() > gametime {
                             return true;
                         }
-                        let pktopt = gdp_ppp.mov(&gamedata, (Etype::Player, pid), dir);
+                        gdp_ppp.mov(&gamedata, (Etype::Player, pid), dir);
                         gdp_ppp.mov_timeout(gametime);
-                        pktopt
                     },
                     Some(s) => {
                         if *gdp_ppp.mut_skill_next(s) > gametime {
                             return true;
                         }
-                        let pktopt = gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, Some(dir));
+                        gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, Some(dir));
                         gdp_ppp.skill_timeout(s, gametime);
-                        pktopt
                     },
                 };
                 drop(gdp_ppp);
@@ -163,10 +161,6 @@ impl Controller {
                 pth(&mut self.d);
                 pth(&mut self.l);
                 pth(&mut self.r);
-                
-                if let Some(pkt) = pktopt {
-                   sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
-                }
             },
             None => {
                 if let Some(s) = self.s {
@@ -176,15 +170,11 @@ impl Controller {
                     if gdp_ppp.directional_skill(s) || *gdp_ppp.mut_skill_next(s) > gametime {
                         return true;
                     }
-                    let pktopt = (*gdp_ppp).skill(&gamedata, (Etype::Player, pid), s, None);
+                    gdp_ppp.skill(&gamedata, (Etype::Player, pid), s, None);
                     gdp_ppp.skill_timeout(s, gametime);
                     
                     drop(gdp_ppp);
                     drop(gdp);
-
-                    if let Some(pkt) = pktopt {
-                        sender.send(PktPayload::PlayerDelta(vec![PlayerDeltaEvent{pid, newpos: pkt}])).unwrap();
-                    }
                 }
             },
         }
