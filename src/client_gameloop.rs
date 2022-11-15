@@ -87,6 +87,8 @@ pub fn gameloop() -> Result<(), String> {
             break;
         }
         
+        // todo broadcast the packets
+        
         // println!("{:?}", gs.gamedata.players[gs.pid].lock().unwrap());
         // The rest of the game loop goes here...
 
