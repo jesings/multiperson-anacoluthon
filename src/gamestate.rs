@@ -3,12 +3,14 @@ use sdl2::*;
 use std::sync::{*, mpsc};
 use std::thread::JoinHandle;
 use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::map::grid::Grid;
 use super::player::player::Player;
 use super::enemy::enemy::Enemy;
+use super::bozo_ent::bozo_ent::BozoEnt;
 use super::entity::entity::{Etype};
-use super::net::pkt::PktPayload;
+use super::net::pkt::{PktType, PktPayload};
 use super::render::texture_table::TextureTable;
 
 
@@ -28,8 +30,10 @@ pub struct ClientGamestate<'a> {
 pub struct Gamedata {
     pub players: Vec<Arc<Mutex<Player>>>,
     pub enemies: Vec<Arc<Mutex<Enemy>>>,
+    pub bozoents: BTreeMap<usize, Arc<Mutex<BozoEnt>>>,
     pub grid: Grid,
-    pub occupation: Arc<RwLock<HashMap<(isize, isize), (Etype, usize)>>>
+    pub occupation: Arc<RwLock<HashMap<(isize, isize), Vec<(Etype, usize)>>>>,
+    pub pktbuf: Arc<Mutex<BTreeMap<PktType, PktPayload>>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

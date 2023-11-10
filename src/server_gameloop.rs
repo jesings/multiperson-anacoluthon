@@ -90,7 +90,7 @@ pub fn gameloop() {
     
     let mut occupied = HashMap::new();
     for (i, loc) in playerlocs.iter().enumerate() {
-        occupied.insert(*loc, (Etype::Player, i));
+        occupied.insert(*loc, vec![(Etype::Player, i)]);
     }
 
     let mut enemy_tick_table: BTreeMap<Duration, Vec<usize>> = BTreeMap::new();
@@ -107,7 +107,7 @@ pub fn gameloop() {
                 }
             }
         }
-        occupied.insert(randloc, (Etype::Enemy, i));
+        occupied.insert(randloc, vec![(Etype::Enemy, i)]);
         enemylocs.push(randloc);
     }
 
@@ -116,13 +116,14 @@ pub fn gameloop() {
     let enemyarr = enemylocs.drain(..).enumerate().map(|(i, x)| Arc::new(Mutex::new(
                 if rand::random::<bool>() {Enemy::test_enemy(i, x)} else {Enemy::fast_enemy(i, x)}
                 ))).collect();
-
     enemy_tick_table.insert(Duration::from_millis(200), (0..MAPDIM.0).collect()); //moderate delay for starting
     let gd = Arc::new(Gamedata {
         players: playarrs,
         enemies: enemyarr,
+        bozoents: BTreeMap::new(),
         grid,
         occupation: Arc::new(RwLock::new(occupied)),
+        pktbuf: Arc::new(Mutex::new(BTreeMap::new())),
     });
 
 
@@ -141,7 +142,7 @@ pub fn gameloop() {
                         let dpp = deltaplayer.mut_pos();
                         let mut occupied = gd.occupation.write().unwrap();
                         occupied.remove(&dpp);
-                        occupied.insert(delta.newpos, (Etype::Player, delta.pid));
+                        occupied.insert(delta.newpos, vec![(Etype::Player, delta.pid)]);
                         dpp.0 = delta.newpos.0;
                         dpp.1 = delta.newpos.1;
                         //check that this position is valid, if not revert!?
@@ -164,12 +165,10 @@ pub fn gameloop() {
                 let mut enemy = gd.enemies[enemyid].lock().unwrap();
                 let moveloc = enemy.enemy_type.move_pattern();
 
-                let confirmedloc = enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
-                if let Some(newpos) = confirmedloc {
-                    enemydeltas.push(EnemyDeltaEvent{eid: enemyid, newpos});
-                } else {
-                    enemy.enemy_type.crash();
-                }
+                enemy.mov(&gd, (Etype::Enemy, enemyid), moveloc);
+
+                // enemy.enemy_type.crash(); // todo where do poland ball crash
+                
 
                 enemy.mov_timeout(now);
 
@@ -187,7 +186,7 @@ pub fn gameloop() {
         }
         enemy_tick_table = later_ticks;
 
-        while broadcasts_needed.len() > 0 {
+        while broadcasts_needed.len() > 0 { // todo make this the btreemap
             let frontel = broadcasts_needed.pop_front().unwrap();
             let tryfront = Arc::new(frontel);
             if let Err(_) = spmc.try_broadcast(tryfront.clone()) {
