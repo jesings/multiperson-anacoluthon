@@ -26,18 +26,17 @@ impl Player {
     pub fn directional_skill(&self, skill: usize) -> bool {
         self.class.directional_skill(skill)
     }
-    
+
     pub fn mut_skill_next(&mut self, skill: usize) -> &mut Duration {
-        &mut self.class.mut_skill_next(skill)
+        self.class.mut_skill_next(skill)
     }
 
     pub fn skill_timeout(&mut self, skill: usize, now: Duration) {
-        let mut skill_next = self.mut_skill_next(skill);
-        *skill_next = now + self.class.skill_timeout(skill);
+        *self.mut_skill_next(skill) = now + self.class.skill_timeout(skill);
     }
 
     pub fn skill(&mut self, gamedata: &Arc<Gamedata>, entid: (Etype, usize), skill: usize, dir: Option<(isize, isize)>) { // probably move to impl entity eventually
-        
+
     }
 }
 

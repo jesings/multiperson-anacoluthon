@@ -16,22 +16,22 @@ impl Class {
 
     pub fn skill_timeout(&self, skill: usize) -> Duration {
         match self {
-            Class::VoidOrifice(void_orifice) => void_orifice.skill_timeout[skill],
+            Class::VoidOrifice(ref void_orifice) => void_orifice.skill_timeout[skill],
         }
     }
 
-    pub fn mut_skill_next(&self, skill: usize) -> &mut Duration {
+    pub fn mut_skill_next(&mut self, skill: usize) -> &mut Duration {
         match self {
-            Class::VoidOrifice(void_orifice) => &mut void_orifice.skill_next[skill],
+            Class::VoidOrifice(ref mut void_orifice) => &mut void_orifice.skill_next[skill],
         }
     }
 
     pub fn directional_skill(&self, skill: usize) -> bool {
         match self {
-            Class::VoidOrifice(void_orifice) => void_orifice.directional_skill[skill],
+            Class::VoidOrifice(ref void_orifice) => void_orifice.directional_skill[skill],
         }
     }
-    
+
     pub fn void_orifice() -> Self {
         Class::VoidOrifice(VoidOrifice::new())
     }
