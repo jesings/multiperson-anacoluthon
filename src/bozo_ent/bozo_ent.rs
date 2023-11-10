@@ -23,7 +23,7 @@ pub enum BozoKind {
 }
 
 impl BozoKind {
-    pub fn tick(&mut self) -> Option<(isize, isize)> {
+    pub fn tick(&mut self) -> Option<(isize, isize)> {//ok i forgor what this do
         match self {
             BozoKind::Sword(_) => None,
             _ => Some((0, 0)),

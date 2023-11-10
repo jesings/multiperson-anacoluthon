@@ -30,26 +30,25 @@ struct PktHeader {
     pub payload_len: usize
 }
 
-pub fn coalesce_pkts(into: &mut BTreeMap<PktType, PktPayload>, from: &mut BTreeMap<PktType, PktPayload>) {
-    for (k,fv) in from.iter_mut() {
-        subsume_pkt(&mut into, *k, fv);
+pub fn coalesce_pkts(into: &mut BTreeMap<PktType, PktPayload>, from: BTreeMap<PktType, PktPayload>) {
+    for (k,fv) in from.into_iter() {
+        subsume_pkt(into, k, fv);
     }
-    drop(from);
 }
 
-pub fn subsume_pkt(into: &mut BTreeMap<PktType, PktPayload>, k: PktType, fv: &mut PktPayload) {
-    if let Some(mut iv) = into.get_mut(&k) {
-        match (iv,fv) {
-            (PktPayload::Initial(_), PktPayload::Initial(init)) =>
-                *iv = *fv,
-            (PktPayload::PlayerDelta(ilst), PktPayload::PlayerDelta(flst)) =>
-                ilst.append(&mut flst),
-            (PktPayload::EnemyDelta(ilst), PktPayload::EnemyDelta(flst)) => 
-                ilst.append(&mut flst),
+pub fn subsume_pkt(into: &mut BTreeMap<PktType, PktPayload>, k: PktType, fv: PktPayload) {
+    if let Some(iv) = into.get_mut(&k) {
+        match (iv, fv) {
+            (&mut PktPayload::Initial(ref mut ont), PktPayload::Initial(nnt)) =>
+                *ont = nnt,
+            (&mut PktPayload::PlayerDelta(ref mut ilst), PktPayload::PlayerDelta(ref mut flst)) =>
+                ilst.append(flst),
+            (&mut PktPayload::EnemyDelta(ref mut ilst), PktPayload::EnemyDelta(ref mut flst)) =>
+                ilst.append(flst),
             _ => unreachable!(),
         };
     } else {
-        into.insert(k,*fv);
+        into.insert(k, fv);
     }
 }
 
@@ -63,10 +62,10 @@ pub fn recv_pkt(stream: &mut TcpStream) -> Result<PktPayload, String> {
             } else if num < std::mem::size_of::<PktHeader>() {
                 return Err("Packet header was malformed".to_string());
             }
-        } 
+        }
         Err(ref e) => {
             match e.kind() {
-                ErrorKind::WouldBlock | 
+                ErrorKind::WouldBlock |
                 ErrorKind::Interrupted => {
                     return Err("No packet available".to_string());
                 }
@@ -136,8 +135,8 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
             header = PktHeader {tag: PktType::EnemyDelta, payload_len: paybuf.len()};
         }
     }
-    let io_header = IoSlice::new(unsafe { 
-        std::slice::from_raw_parts((&header as *const PktHeader) 
+    let io_header = IoSlice::new(unsafe {
+        std::slice::from_raw_parts((&header as *const PktHeader)
             as *const u8, std::mem::size_of::<PktHeader>())
     });
     let io_payload = IoSlice::new(paybuf.as_slice());
@@ -147,7 +146,7 @@ pub fn send_pkt(stream: &mut TcpStream, payload: Arc<PktPayload>) -> Result<usiz
         }
         Err(ref e) => {
             match e.kind() {
-                ErrorKind::WouldBlock | 
+                ErrorKind::WouldBlock |
                 ErrorKind::Interrupted => {
                     Err("Could not write to stream!".to_string())
                 }
